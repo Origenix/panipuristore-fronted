@@ -827,19 +827,19 @@ const OwnerDashboard = () => {
                             </div>
                         )}
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                             {menuItems.map(item => (
-                                <div key={item.id} className="card-premium overflow-hidden border-none shadow-2xl flex group">
-                                    <img src={item.image || 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&fit=crop'} className="w-32 h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={item.name} />
-                                    <div className="p-6 flex-grow flex flex-col">
-                                        <div className="flex justify-between items-start mb-2">
-                                            <h4 className="font-black text-lg">{item.name}</h4>
-                                            <span className="text-primary font-black">₹{item.price}</span>
+                                <div key={item.id} className="card-premium overflow-hidden border-none shadow-2xl flex flex-col group min-w-0">
+                                    <img src={item.image || 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&fit=crop'} className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500" alt={item.name} />
+                                    <div className="p-5 flex-grow flex flex-col min-w-0">
+                                        <div className="flex justify-between items-start gap-3 mb-2">
+                                            <h4 className="font-black text-lg break-words min-w-0">{item.name}</h4>
+                                            <span className="text-primary font-black whitespace-nowrap">₹{item.price}</span>
                                         </div>
                                         <p className="text-xs text-muted-foreground font-bold mb-1 opacity-70">Category: {item.categoryName}</p>
                                         <p className="text-xs text-muted-foreground font-medium line-clamp-2 mb-4 flex-grow">{item.description}</p>
-                                        <div className="flex items-center justify-between mt-auto">
-                                            <div className="flex gap-2">
+                                        <div className="flex flex-col gap-3 mt-auto">
+                                            <div className="flex flex-wrap gap-2">
                                                 <button 
                                                     onClick={() => toggleProductActive(item)}
                                                     className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg ${item.available ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
@@ -853,9 +853,23 @@ const OwnerDashboard = () => {
                                                     <Activity className="w-3 h-3"/> {item.trending ? 'Trending' : 'Normal'}
                                                 </button>
                                             </div>
-                                            <div className="flex gap-2">
-                                                <button onClick={() => { setEditingProduct(item); setProductForm({...item, categoryId: item.categoryId || ''}); setShowProductForm(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200"><Edit2 className="w-4 h-4"/></button>
-                                                <button onClick={() => deleteProduct(item.id)} className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"><Trash2 className="w-4 h-4"/></button>
+                                            <div className="flex gap-2 w-full">
+                                                <button
+                                                    onClick={() => { setEditingProduct(item); setProductForm({...item, categoryId: item.categoryId || ''}); setShowProductForm(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                                    className="flex-1 min-w-0 h-10 flex items-center justify-center gap-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200"
+                                                    title="Edit Product"
+                                                >
+                                                    <Edit2 className="w-4 h-4"/>
+                                                    <span className="text-xs font-bold">Edit</span>
+                                                </button>
+                                                <button
+                                                    onClick={() => deleteProduct(item.id)}
+                                                    className="flex-1 min-w-0 h-10 flex items-center justify-center gap-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
+                                                    title="Delete Product"
+                                                >
+                                                    <Trash2 className="w-4 h-4"/>
+                                                    <span className="text-xs font-bold">Delete</span>
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
