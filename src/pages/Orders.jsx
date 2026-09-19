@@ -140,6 +140,11 @@ const Orders = () => {
                                     <div className="flex flex-wrap items-center gap-6 text-sm font-bold text-muted-foreground">
                                         <span className="flex items-center gap-2"><Clock className="w-4 h-4 text-primary" /> {new Date(order.createdAt).toLocaleDateString()}</span>
                                         <span className="flex items-center gap-2"><MapPin className="w-4 h-4 text-primary" /> {order.restaurantName}</span>
+                                        {order.restaurantOwnerPhone && !['PENDING_CONFIRMATION', 'REJECTED_BY_OWNER', 'CANCELLED'].includes(order.orderStatus) && (
+                                            <a href={`tel:${order.restaurantOwnerPhone}`} className="flex items-center gap-2 text-primary bg-primary/10 px-3 py-1 rounded-full">
+                                                <span>Owner: {order.restaurantOwnerPhone}</span>
+                                            </a>
+                                        )}
                                         {order.estimatedDeliveryTime && !['DELIVERED', 'CANCELLED', 'REJECTED_BY_OWNER'].includes(order.orderStatus) && (
                                             <span className="flex items-center gap-2 text-primary bg-primary/10 px-3 py-1 rounded-full"><Clock className="w-4 h-4" /> ETA: {new Date(order.estimatedDeliveryTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                                         )}
@@ -148,6 +153,9 @@ const Orders = () => {
                                 <div className="md:text-right">
                                     <p className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">Total Amount</p>
                                     <p className="text-5xl font-black text-primary tracking-tighter">₹{order.totalAmount}</p>
+                                    {order.items.some(item => item.unavailable) && (
+                                        <p className="text-xs font-bold text-red-600 mt-2">Total updated after unavailable item(s)</p>
+                                    )}
                                 </div>
                             </div>
                             
@@ -291,16 +299,29 @@ const Orders = () => {
                                     </h4>
                                     <div className="space-y-5">
                                         {order.items.map(item => (
-                                            <div key={item.id} className="flex justify-between items-center group">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-black shadow-sm">
+                                            <div key={item.id} className={`flex justify-between items-center gap-4 group ${item.unavailable ? 'opacity-60' : ''}`}>
+                                                <div className="flex items-center gap-4 min-w-0">
+                                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black shadow-sm ${item.unavailable ? 'bg-red-100 text-red-600' : 'bg-primary/10 text-primary'}`}>
                                                         {item.quantity}
                                                     </div>
-                                                    <span className="font-bold opacity-90 group-hover:opacity-100 transition-opacity text-lg">{item.menuItemName}</span>
+                                                    <div className="min-w-0">
+                                                        <span className={`font-bold group-hover:opacity-100 transition-opacity text-lg ${item.unavailable ? 'line-through' : ''}`}>{item.menuItemName}</span>
+                                                        {item.unavailable && (
+                                                            <p className="text-xs font-black uppercase text-red-600 mt-1">Out of stock — amount removed</p>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                                <span className="font-black text-lg">₹{item.price * item.quantity}</span>
+                                                <span className={`font-black text-lg flex-shrink-0 ${item.unavailable ? 'line-through text-muted-foreground' : ''}`}>
+                                                    ₹{item.price * item.quantity}
+                                                </span>
                                             </div>
                                         ))}
+                                        {order.items.some(item => item.unavailable) && (
+                                            <div className="mt-5 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700">
+                                                <p className="font-black text-sm">Some items are unavailable.</p>
+                                                <p className="text-xs font-medium mt-1">The unavailable item amount has been removed from your order total.</p>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                                 
