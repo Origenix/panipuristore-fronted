@@ -22,7 +22,7 @@ const plans = [
         icon: Store,
         features: ['Restaurant listing', 'Menu and category management', 'Receive and manage orders', 'Owner dashboard', 'Restaurant open/close control'],
         cta: 'Contact Support',
-        href: 'mailto:support.origenix@gmail.com?subject=Restaurant%20Subscription%20-%20PANIPURI%20STORE',
+        href: 'mailto:support.origenix@gmail.com?subject=Restaurant%20Subscription%20-%20PANIPURI%20STORE&body=Hello%20PANIPURI%20STORE%20Support%2C%0A%0AI%20am%20interested%20in%20the%20Restaurant%20Subscription.%20Please%20share%20the%20registration%20and%20payment%20details.%0A%0AThank%20you.',
         featured: true
     },
     {
@@ -33,7 +33,7 @@ const plans = [
         icon: Bike,
         features: ['Delivery partner access', 'Assigned order management', 'Order status updates', 'Delivery dashboard'],
         cta: 'Contact Support',
-        href: 'mailto:support.origenix@gmail.com?subject=Delivery%20Partner%20Subscription%20-%20PANIPURI%20STORE',
+        href: 'mailto:support.origenix@gmail.com?subject=Delivery%20Partner%20Subscription%20-%20PANIPURI%20STORE&body=Hello%20PANIPURI%20STORE%20Support%2C%0A%0AI%20am%20interested%20in%20the%20Delivery%20Partner%20Subscription.%20Please%20share%20the%20registration%20and%20payment%20details.%0A%0AThank%20you.',
         featured: false
     }
 ];
@@ -119,7 +119,7 @@ const SubscriptionPlans = () => {
                             </p>
                         </div>
                         <div className="flex flex-wrap gap-3">
-                            <a href="mailto:support.origenix@gmail.com?subject=PANIPURI%20STORE%20Subscription%20Support" className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-primary text-white font-black hover:bg-primary-hover transition-colors">
+                            <a href="mailto:support.origenix@gmail.com?subject=PANIPURI%20STORE%20Subscription%20Support&body=Hello%20PANIPURI%20STORE%20Support%2C%0A%0AI%20have%20a%20subscription%20query.%20Please%20help%20me%20with%20the%20registration%20and%20subscription%20details.%0A%0AThank%20you." className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-primary text-white font-black hover:bg-primary-hover transition-colors">
                                 <Mail className="w-4 h-4" />
                                 Contact Support
                             </a>
