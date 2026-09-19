@@ -361,15 +361,34 @@ const OwnerDashboard = () => {
 
     const toggleRestaurantOrdering = async () => {
         try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                toast.error('Your session has expired. Please login again.');
+                return;
+            }
+
             const nextClosed = !activeRestaurant.manualClosed;
             const res = await axios.put(
-                `/restaurants/owner/${activeRestaurant.id}/toggle-ordering?closed=${nextClosed}`
+                `/restaurants/owner/${activeRestaurant.id}/toggle-ordering?closed=${nextClosed}`,
+                {},
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
             );
             setRestaurants([res.data]);
             toast.success(nextClosed
                 ? 'Restaurant closed. Customers cannot place new orders.'
                 : 'Restaurant opened. Customers can place orders again.');
         } catch (error) {
+            if (error.response?.status === 401) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                toast.error('Your login session has expired. Please login again.');
+                window.location.href = '/login';
+                return;
+            }
             toast.error(error.response?.data?.message || 'Failed to update restaurant ordering status');
         }
     };
