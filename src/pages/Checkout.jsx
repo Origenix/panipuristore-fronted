@@ -29,6 +29,7 @@ const Checkout = () => {
     const [appliedCoupon, setAppliedCoupon] = useState(null); // { code, discountAmount, description }
     const [couponError, setCouponError] = useState('');
     const [couponLoading, setCouponLoading] = useState(false);
+    const [minimumOrderAmount, setMinimumOrderAmount] = useState(0);
 
     // Payment Gateway States
     const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -60,6 +61,24 @@ const Checkout = () => {
         loadAddresses();
     }, []);
 
+    useEffect(() => {
+        const loadMinimumOrderAmount = async () => {
+            const restaurantId = cart?.items?.[0]?.restaurantId;
+            if (!restaurantId) {
+                setMinimumOrderAmount(0);
+                return;
+            }
+            try {
+                const res = await axios.get(`/restaurants/public/${restaurantId}`);
+                setMinimumOrderAmount(Number(res.data.minimumOrderAmount || 0));
+            } catch (err) {
+                console.error("Failed to load minimum order amount", err);
+                setMinimumOrderAmount(0);
+            }
+        };
+        loadMinimumOrderAmount();
+    }, [cart?.items]);
+
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
@@ -85,6 +104,13 @@ const Checkout = () => {
         
         if (!selectedAddress) {
             toast.error("Please select a delivery address");
+            return;
+        }
+
+        const currentSubtotal = cart?.items?.reduce((acc, item) => acc + (item.price * item.quantity), 0) || 0;
+        if (minimumOrderAmount > 0 && currentSubtotal < minimumOrderAmount) {
+            const amountToAdd = minimumOrderAmount - currentSubtotal;
+            toast.error(`Cart amount is too low. Add ₹${amountToAdd.toFixed(2)} more to place the order.`, { duration: 5000 });
             return;
         }
 
@@ -427,10 +453,17 @@ const Checkout = () => {
                                 </div>
                             </div>
 
+                            {minimumOrderAmount > 0 && subtotal < minimumOrderAmount && (
+                                <div className="mb-4 p-4 rounded-2xl bg-orange-500/10 border border-orange-400/30 text-orange-100 relative z-10">
+                                    <p className="font-black text-sm">Add ₹{(minimumOrderAmount - subtotal).toFixed(2)} more to place your order.</p>
+                                    <p className="text-xs opacity-80 mt-1">Minimum order value: ₹{minimumOrderAmount.toFixed(2)}</p>
+                                </div>
+                            )}
+
                             <button 
                                 type="submit"
                                 form="checkout-form"
-                                disabled={loading || fetchingAddresses || (addresses.length === 0 && !selectedAddress)}
+                                disabled={loading || fetchingAddresses || (addresses.length === 0 && !selectedAddress) || (minimumOrderAmount > 0 && subtotal < minimumOrderAmount)}
                                 className="btn-primary w-full h-16 text-xl tracking-tight !bg-white !text-primary hover:!bg-primary hover:!text-white shadow-2xl shadow-black/40 relative z-10 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {loading ? 'Processing...' : (formData.paymentMethod === 'ONLINE' ? 'Proceed to Pay' : 'Place Order')}
