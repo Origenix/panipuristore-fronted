@@ -21,6 +21,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import OwnerDashboard from './pages/OwnerDashboard';
 import DeliveryDashboard from './pages/DeliveryDashboard';
 import MyAddresses from './pages/MyAddresses';
+import SubscriptionPlans from './pages/SubscriptionPlans';
 
 const ProtectedRoute = ({ children, allowedRoles, roles }) => {
     const { user, loading } = useContext(AuthContext);
@@ -54,6 +55,7 @@ function App() {
                         <Route path="/" element={<Home />} />
                         <Route path="/login" element={<Login />} />
                         <Route path="/signup" element={<Signup />} />
+                        <Route path="/subscription-plans" element={<SubscriptionPlans />} />
                         <Route path="/menu" element={<AllMenu />} />
                         <Route path="/restaurants" element={<RestaurantList />} />
                         <Route path="/restaurant/:id" element={<Menu />} />
