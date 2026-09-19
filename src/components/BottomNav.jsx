@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { CartContext } from '../context/CartContext';
-import { Home, Utensils, ShoppingBag, User } from 'lucide-react';
+import { Home, Utensils, ShoppingBag, User, Store } from 'lucide-react';
 
 const BottomNav = () => {
     const { user } = useContext(AuthContext);
@@ -19,7 +19,9 @@ const BottomNav = () => {
     const navItems = [
         { path: '/', label: 'Home', icon: Home },
         { path: '/menu', label: 'Menu', icon: Utensils },
-        { path: '/cart', label: 'Cart', icon: ShoppingBag, badge: cartItemsCount },
+        user
+            ? { path: '/cart', label: 'Cart', icon: ShoppingBag, badge: cartItemsCount }
+            : { path: '/restaurants', label: 'Restaurants', icon: Store },
         { 
             path: user ? (user.role === 'ROLE_CUSTOMER' ? '/orders' : '/login') : '/login', 
             label: user ? 'Profile' : 'Login', 
