@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Check, Store, Bike, UserRound, Mail, Phone, ArrowRight } from 'lucide-react';
+import { Check, Store, Bike, UserRound, Mail, ArrowRight } from 'lucide-react';
 
 const plans = [
     {
@@ -122,10 +122,6 @@ const SubscriptionPlans = () => {
                             <a href="mailto:support.origenix@gmail.com?subject=PANIPURI%20STORE%20Subscription%20Support" className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-primary text-white font-black hover:bg-primary-hover transition-colors">
                                 <Mail className="w-4 h-4" />
                                 Contact Support
-                            </a>
-                            <a href="tel:+919999999999" className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-muted font-black hover:bg-border transition-colors">
-                                <Phone className="w-4 h-4" />
-                                Call Support
                             </a>
                         </div>
                     </div>
