@@ -258,27 +258,27 @@ const Menu = () => {
                     </div>
                 )}
 
-                <div className="flex flex-col lg:flex-row gap-10 items-start">
-                    <div className="flex-1 min-w-0">
+                <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 items-start w-full min-w-0 overflow-x-hidden">
+                    <div className="flex-1 w-full min-w-0 max-w-full overflow-x-hidden">
                         {/* Search Bar */}
-                        <div className="relative mb-6">
+                        <div className="relative mb-6 w-full max-w-full min-w-0">
                             <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
                             <input 
                                 type="text"
                                 placeholder="Search for pani puri, chaat, beverages..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full bg-background border border-border rounded-full py-4 pl-14 pr-6 font-medium shadow-sm focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                                className="block w-full max-w-full min-w-0 box-border bg-background border border-border rounded-full py-4 pl-12 sm:pl-14 pr-4 sm:pr-6 font-medium shadow-sm focus:border-primary focus:ring-1 focus:ring-primary transition-all"
                             />
                         </div>
 
                         {/* Categories Sticky Nav */}
-                        <div className="flex gap-3 overflow-x-auto pb-4 no-scrollbar sticky top-[80px] z-30 bg-background/95 backdrop-blur-md py-4 border-b border-border mb-6 snap-x snap-mandatory">
+                        <div className="flex w-full max-w-full min-w-0 gap-2 sm:gap-3 overflow-x-auto overflow-y-hidden pb-4 no-scrollbar sticky top-[80px] z-30 bg-background/95 backdrop-blur-md py-4 border-b border-border mb-6 snap-x snap-mandatory">
                             {categoriesList.map(cat => (
                                 <button
                                     key={cat}
                                     onClick={() => setActiveCategory(cat)}
-                                    className={`px-5 md:px-6 py-2 md:py-2.5 rounded-full text-xs md:text-sm font-bold transition-all whitespace-nowrap snap-center ${
+                                    className={`flex-shrink-0 px-4 md:px-6 py-2 md:py-2.5 rounded-full text-xs md:text-sm font-bold transition-all whitespace-nowrap snap-center ${
                                         activeCategory === cat 
                                         ? 'bg-primary text-white shadow-lg shadow-primary/30' 
                                         : 'bg-muted text-muted-foreground hover:bg-border'
