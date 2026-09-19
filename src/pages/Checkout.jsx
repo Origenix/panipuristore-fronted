@@ -185,7 +185,7 @@ const Checkout = () => {
             fetchCart(); 
             setTimeout(() => {
                 navigate('/orders');
-            }, 5000);
+            }, 1000);
         } catch (err) {
             handleRuntimeError(err);
         } finally {
