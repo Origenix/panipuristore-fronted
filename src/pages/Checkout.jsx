@@ -33,6 +33,7 @@ const Checkout = () => {
     const [deliveryCharge, setDeliveryCharge] = useState(0);
     const [restaurantOpeningTime, setRestaurantOpeningTime] = useState(null);
     const [restaurantClosingTime, setRestaurantClosingTime] = useState(null);
+    const [restaurantManualClosed, setRestaurantManualClosed] = useState(false);
 
     // Payment Gateway States
     const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -110,6 +111,7 @@ const Checkout = () => {
     };
 
     const isRestaurantOpen = () => {
+        if (restaurantManualClosed) return false;
         if (!restaurantOpeningTime || !restaurantClosingTime) return true;
         const now = new Date();
         const currentMinutes = now.getHours() * 60 + now.getMinutes();
@@ -131,6 +133,15 @@ const Checkout = () => {
         
         if (!selectedAddress) {
             toast.error("Please select a delivery address");
+            return;
+        }
+
+        if (restaurantManualClosed) {
+            setErrorDetails({
+                message: "This restaurant is currently closed and is not accepting orders right now. Please try again later.",
+                devInfo: ""
+            });
+            setShowErrorModal(true);
             return;
         }
 
@@ -488,12 +499,17 @@ const Checkout = () => {
                                 </div>
                             </div>
 
-                            {restaurantOpeningTime && restaurantClosingTime && !isRestaurantOpen() && (
+                            {restaurantManualClosed ? (
+                                <div className="mb-4 p-4 rounded-2xl bg-red-500/10 border border-red-400/30 text-red-100 relative z-10">
+                                    <p className="font-black text-sm">Restaurant is currently closed.</p>
+                                    <p className="text-xs opacity-80 mt-1">The restaurant is temporarily not accepting orders. Please try again later.</p>
+                                </div>
+                            ) : restaurantOpeningTime && restaurantClosingTime && !isRestaurantOpen() ? (
                                 <div className="mb-4 p-4 rounded-2xl bg-red-500/10 border border-red-400/30 text-red-100 relative z-10">
                                     <p className="font-black text-sm">Restaurant is currently closed.</p>
                                     <p className="text-xs opacity-80 mt-1">Orders are accepted from {restaurantOpeningTime.slice(0, 5)} to {restaurantClosingTime.slice(0, 5)}.</p>
                                 </div>
-                            )}
+                            ) : null}
                             {minimumOrderAmount > 0 && subtotal < minimumOrderAmount && (
                                 <div className="mb-4 p-4 rounded-2xl bg-orange-500/10 border border-orange-400/30 text-orange-100 relative z-10">
                                     <p className="font-black text-sm">Add ₹{(minimumOrderAmount - subtotal).toFixed(2)} more to place your order.</p>
@@ -507,7 +523,7 @@ const Checkout = () => {
                                 disabled={loading || fetchingAddresses || (addresses.length === 0 && !selectedAddress) || (minimumOrderAmount > 0 && subtotal < minimumOrderAmount) || !isRestaurantOpen()}
                                 className="btn-primary w-full h-16 text-xl tracking-tight !bg-white !text-primary hover:!bg-primary hover:!text-white shadow-2xl shadow-black/40 relative z-10 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {loading ? 'Processing...' : (formData.paymentMethod === 'ONLINE' ? 'Proceed to Pay' : 'Place Order')}
+                                {loading ? 'Processing...' : (restaurantManualClosed ? 'Restaurant Closed' : (formData.paymentMethod === 'ONLINE' ? 'Proceed to Pay' : 'Place Order'))}
                             </button>
                             
                             <div className="mt-8 flex items-center gap-2 text-[11px] font-black uppercase tracking-widest opacity-50 justify-center relative z-10">
