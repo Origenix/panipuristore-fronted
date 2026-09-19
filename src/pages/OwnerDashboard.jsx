@@ -359,6 +359,21 @@ const OwnerDashboard = () => {
         }
     };
 
+    const toggleRestaurantOrdering = async () => {
+        try {
+            const nextClosed = !activeRestaurant.manualClosed;
+            const res = await axios.put(
+                `/restaurants/owner/${activeRestaurant.id}/toggle-ordering?closed=${nextClosed}`
+            );
+            setRestaurants([res.data]);
+            toast.success(nextClosed
+                ? 'Restaurant closed. Customers cannot place new orders.'
+                : 'Restaurant opened. Customers can place orders again.');
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to update restaurant ordering status');
+        }
+    };
+
     const pendingOrders = orders.filter(o => o.orderStatus === 'PENDING_CONFIRMATION');
     const activeOrders = orders.filter(o => ['ACCEPTED_BY_OWNER', 'PREPARING', 'READY_FOR_PICKUP', 'ASSIGNED_TO_AGENT', 'PICKED_UP', 'OUT_FOR_DELIVERY'].includes(o.orderStatus));
     const completedOrders = orders.filter(o => ['DELIVERED', 'CANCELLED', 'REJECTED_BY_OWNER'].includes(o.orderStatus));
@@ -391,6 +406,18 @@ const OwnerDashboard = () => {
                         <div>
                             <h1 className="text-5xl font-black tracking-tighter mb-2">{activeRestaurant.name}</h1>
                             <p className="text-xl text-primary font-black uppercase tracking-widest text-xs">Partner Portal</p>
+                            <button
+                                type="button"
+                                onClick={toggleRestaurantOrdering}
+                                className={`mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+                                    activeRestaurant.manualClosed
+                                        ? 'bg-green-500 text-white hover:bg-green-600'
+                                        : 'bg-red-500 text-white hover:bg-red-600'
+                                }`}
+                            >
+                                {activeRestaurant.manualClosed ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                                {activeRestaurant.manualClosed ? 'Open Restaurant' : 'Close Restaurant'}
+                            </button>
                         </div>
                     </div>
 
