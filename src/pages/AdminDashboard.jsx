@@ -25,6 +25,8 @@ const AdminDashboard = () => {
     const [imageFile, setImageFile] = useState(null);
 
     const [showAdminForm, setShowAdminForm] = useState(false);
+    const [editingUser, setEditingUser] = useState(null);
+    const [userForm, setUserForm] = useState({ name: '', phone: '', address: '', role: 'CUSTOMER' });
     const [adminForm, setAdminForm] = useState({
         name: '', email: '', password: '', phone: '', address: ''
     });
@@ -296,6 +298,23 @@ const AdminDashboard = () => {
             setAdminForm({ name: '', email: '', password: '', phone: '', address: '' });
         } catch (err) {
             toast.error(err.response?.data?.error || err.response?.data?.message || "Failed to create admin");
+        }
+    };
+
+    const handleEditUser = (user) => {
+        setEditingUser(user);
+        setUserForm({ name: user.name || '', phone: user.phone || '', address: user.address || '', role: user.role || 'CUSTOMER' });
+    };
+
+    const handleUpdateUser = async (e) => {
+        e.preventDefault();
+        try {
+            const res = await axios.put(`/users/admin/${editingUser.id}`, { ...userForm });
+            setUsers(users.map(u => u.id === editingUser.id ? res.data : u));
+            setEditingUser(null);
+            toast.success("User updated successfully!");
+        } catch (err) {
+            toast.error(err.response?.data?.message || err.response?.data?.error || "Failed to update user");
         }
     };
 
@@ -654,6 +673,30 @@ const AdminDashboard = () => {
                             </div>
                         )}
 
+                        {editingUser && (
+                            <div className="card-premium p-8 bg-card border-none shadow-2xl">
+                                <div className="flex items-center justify-between mb-6">
+                                    <div>
+                                        <h4 className="text-2xl font-black">Update User</h4>
+                                        <p className="text-sm text-muted-foreground">{editingUser.email}</p>
+                                    </div>
+                                    <button onClick={() => setEditingUser(null)} className="p-2 rounded-xl bg-muted"><X className="w-5 h-5" /></button>
+                                </div>
+                                <form onSubmit={handleUpdateUser} className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    <input required value={userForm.name} onChange={e => setUserForm({...userForm, name: e.target.value})} className="input-premium" placeholder="Full Name" />
+                                    <input value={userForm.phone} onChange={e => setUserForm({...userForm, phone: e.target.value})} className="input-premium" placeholder="Phone" />
+                                    <input value={userForm.address} onChange={e => setUserForm({...userForm, address: e.target.value})} className="input-premium md:col-span-2" placeholder="Address" />
+                                    <select value={userForm.role} onChange={e => setUserForm({...userForm, role: e.target.value})} className="input-premium">
+                                        <option value="CUSTOMER">CUSTOMER</option>
+                                        <option value="RESTAURANT_OWNER">RESTAURANT_OWNER</option>
+                                        <option value="DELIVERY_AGENT">DELIVERY_AGENT</option>
+                                        <option value="ADMIN">ADMIN</option>
+                                    </select>
+                                    <button type="submit" className="btn-primary">Save User</button>
+                                </form>
+                            </div>
+                        )}
+
                         <div className="card-premium overflow-hidden border-none shadow-2xl">
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left">
@@ -775,6 +818,13 @@ const AdminDashboard = () => {
                                                 </td>
                                                 <td className="p-6">
                                                     <div className="flex justify-end gap-2">
+                                                        <button
+                                                            onClick={() => handleEditUser(user)}
+                                                            className="p-2 rounded-xl bg-blue-100 text-blue-600 hover:bg-blue-200"
+                                                            title="Update User"
+                                                        >
+                                                            <Edit2 className="w-5 h-5" />
+                                                        </button>
                                                         <button 
                                                             onClick={() => handleToggleUserStatus(user)}
                                                             className={`p-2 rounded-xl transition-colors ${user.active ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'bg-green-100 text-green-600 hover:bg-green-200'}`}
