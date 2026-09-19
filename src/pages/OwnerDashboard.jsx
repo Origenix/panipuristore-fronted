@@ -288,6 +288,25 @@ const OwnerDashboard = () => {
         }
     };
 
+    const updateOrderItemStock = async (orderId, itemId, unavailable) => {
+        try {
+            const endpoint = unavailable
+                ? `/orders/${orderId}/owner/item/${itemId}/out-of-stock`
+                : `/orders/${orderId}/owner/item/${itemId}/restore-stock`;
+
+            await axios.put(endpoint);
+            if (restaurants.length > 0) {
+                await fetchOrdersForRestaurant(restaurants[0].id);
+            }
+            toast.success(unavailable ? 'Item marked out of stock. Customer total updated.' : 'Item restored. Customer total updated.');
+        } catch (error) {
+            if (!error.response || error.response.status >= 500) {
+                toast.error("We're experiencing some server issues right now. Please try again later.");
+            } else {
+                toast.error(error.response?.data?.message || error.response?.data?.error || "Failed to update item stock");
+            }
+        }
+    };
     const updateOrderStatus = async (orderId, action, reason = '', role = 'owner') => {
         try {
             const url = `/orders/${orderId}/${role}/${action}${reason ? `?reason=${reason}` : ''}`;
@@ -568,9 +587,25 @@ const OwnerDashboard = () => {
                                                 Customer: {order.customerName} <br/>
                                                 Phone: {order.customerPhone || 'N/A'}
                                             </div>
-                                            <div className="flex items-center gap-3 text-sm font-bold opacity-70">
-                                                <ShoppingBag className="w-4 h-4 text-primary" />
-                                                {order.items.map(i => `${i.quantity}x ${i.menuItemName}`).join(', ')}
+                                            <div className="space-y-2">
+                                                {order.items.map(i => (
+                                                    <div key={i.id} className="flex items-center justify-between gap-3 text-sm font-bold">
+                                                        <div className={`flex items-center gap-2 min-w-0 ${i.unavailable ? 'line-through opacity-50' : 'opacity-70'}`}>
+                                                            <ShoppingBag className="w-4 h-4 text-primary flex-shrink-0" />
+                                                            <span>{i.quantity}x {i.menuItemName}</span>
+                                                        </div>
+                                                        {i.unavailable ? (
+                                                            <div className="flex items-center gap-2 flex-shrink-0">
+                                                                <span className="text-[9px] font-black uppercase text-red-600 bg-red-100 px-2 py-1 rounded-lg">Out of stock</span>
+                                                                {order.orderStatus !== 'DELIVERED' && (
+                                                                    <button onClick={() => updateOrderItemStock(order.id, i.id, false)} className="px-2.5 py-1.5 bg-green-100 text-green-600 rounded-lg font-black text-[9px] uppercase hover:bg-green-200">Restore</button>
+                                                                )}
+                                                            </div>
+                                                        ) : order.orderStatus !== 'DELIVERED' ? (
+                                                            <button onClick={() => updateOrderItemStock(order.id, i.id, true)} className="px-2.5 py-1.5 bg-red-100 text-red-600 rounded-lg font-black text-[9px] uppercase hover:bg-red-200 flex-shrink-0">Out of Stock</button>
+                                                        ) : null}
+                                                    </div>
+                                                ))}
                                             </div>
                                             <div className="flex items-center gap-3 text-sm font-bold opacity-70">
                                                 <MapPin className="w-4 h-4 text-primary" />
