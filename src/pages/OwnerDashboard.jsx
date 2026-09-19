@@ -1203,6 +1203,11 @@ const OwnerDashboard = () => {
                                     <p className="text-xs text-muted-foreground">Customers must have at least this cart subtotal to place an order.</p>
                                 </div>
                                 <div className="space-y-2">
+                                    <label className="text-sm font-bold text-muted-foreground">Delivery Charge (₹)</label>
+                                    <input type="number" name="deliveryCharge" min="0" step="0.01" defaultValue={activeRestaurant.deliveryCharge ?? 0} className="input-premium" placeholder="e.g. 30" />
+                                    <p className="text-xs text-muted-foreground">This delivery charge is added to the customer's order total before placing the order.</p>
+                                </div>
+                                <div className="space-y-2">
                                     <label className="text-sm font-bold text-muted-foreground">Delivery Available</label>
                                     <select name="deliveryAvailable" defaultValue={activeRestaurant.deliveryAvailable} className="input-premium">
                                         <option value="true">Yes</option>
