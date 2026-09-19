@@ -1198,6 +1198,11 @@ const OwnerDashboard = () => {
                                     <input type="text" name="category" defaultValue={activeRestaurant.category} className="input-premium" placeholder="e.g. Fast Food" />
                                 </div>
                                 <div className="space-y-2">
+                                    <label className="text-sm font-bold text-muted-foreground">Minimum Order Amount (₹)</label>
+                                    <input type="number" name="minimumOrderAmount" min="0" step="0.01" defaultValue={activeRestaurant.minimumOrderAmount ?? 0} className="input-premium" placeholder="e.g. 100" />
+                                    <p className="text-xs text-muted-foreground">Customers must have at least this cart subtotal to place an order.</p>
+                                </div>
+                                <div className="space-y-2">
                                     <label className="text-sm font-bold text-muted-foreground">Delivery Available</label>
                                     <select name="deliveryAvailable" defaultValue={activeRestaurant.deliveryAvailable} className="input-premium">
                                         <option value="true">Yes</option>
