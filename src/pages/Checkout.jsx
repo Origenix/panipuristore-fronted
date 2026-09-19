@@ -31,6 +31,8 @@ const Checkout = () => {
     const [couponLoading, setCouponLoading] = useState(false);
     const [minimumOrderAmount, setMinimumOrderAmount] = useState(0);
     const [deliveryCharge, setDeliveryCharge] = useState(0);
+    const [restaurantOpeningTime, setRestaurantOpeningTime] = useState(null);
+    const [restaurantClosingTime, setRestaurantClosingTime] = useState(null);
 
     // Payment Gateway States
     const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -68,12 +70,16 @@ const Checkout = () => {
             if (!restaurantId) {
                 setMinimumOrderAmount(0);
                 setDeliveryCharge(0);
+                setRestaurantOpeningTime(null);
+                setRestaurantClosingTime(null);
                 return;
             }
             try {
                 const res = await axios.get(`/restaurants/public/${restaurantId}`);
                 setMinimumOrderAmount(Number(res.data.minimumOrderAmount || 0));
                 setDeliveryCharge(Number(res.data.deliveryCharge || 0));
+                setRestaurantOpeningTime(res.data.openingTime || null);
+                setRestaurantClosingTime(res.data.closingTime || null);
             } catch (err) {
                 console.error("Failed to load minimum order amount", err);
                 setMinimumOrderAmount(0);
@@ -103,11 +109,34 @@ const Checkout = () => {
         }
     };
 
+    const isRestaurantOpen = () => {
+        if (!restaurantOpeningTime || !restaurantClosingTime) return true;
+        const now = new Date();
+        const currentMinutes = now.getHours() * 60 + now.getMinutes();
+        const [openHour, openMinute] = restaurantOpeningTime.split(':').map(Number);
+        const [closeHour, closeMinute] = restaurantClosingTime.split(':').map(Number);
+        const openingMinutes = openHour * 60 + openMinute;
+        const closingMinutes = closeHour * 60 + closeMinute;
+        if (openingMinutes === closingMinutes) return true;
+        if (openingMinutes < closingMinutes) return currentMinutes >= openingMinutes && currentMinutes < closingMinutes;
+        return currentMinutes >= openingMinutes || currentMinutes < closingMinutes;
+    };
+
+    const getRestaurantHoursMessage = () => {
+        if (!restaurantOpeningTime || !restaurantClosingTime) return 'The restaurant is currently closed. Please try again during opening hours.';
+        return 'Restaurant is currently closed. Orders can be placed between ' + restaurantOpeningTime.slice(0, 5) + ' and ' + restaurantClosingTime.slice(0, 5) + '. Please try again during opening hours.';
+    };
     const handlePlaceOrder = async (e) => {
         e.preventDefault();
         
         if (!selectedAddress) {
             toast.error("Please select a delivery address");
+            return;
+        }
+
+        if (!isRestaurantOpen()) {
+            setErrorDetails({ message: getRestaurantHoursMessage(), devInfo: "" });
+            setShowErrorModal(true);
             return;
         }
 
@@ -459,6 +488,12 @@ const Checkout = () => {
                                 </div>
                             </div>
 
+                            {restaurantOpeningTime && restaurantClosingTime && !isRestaurantOpen() && (
+                                <div className="mb-4 p-4 rounded-2xl bg-red-500/10 border border-red-400/30 text-red-100 relative z-10">
+                                    <p className="font-black text-sm">Restaurant is currently closed.</p>
+                                    <p className="text-xs opacity-80 mt-1">Orders are accepted from {restaurantOpeningTime.slice(0, 5)} to {restaurantClosingTime.slice(0, 5)}.</p>
+                                </div>
+                            )}
                             {minimumOrderAmount > 0 && subtotal < minimumOrderAmount && (
                                 <div className="mb-4 p-4 rounded-2xl bg-orange-500/10 border border-orange-400/30 text-orange-100 relative z-10">
                                     <p className="font-black text-sm">Add ₹{(minimumOrderAmount - subtotal).toFixed(2)} more to place your order.</p>
@@ -469,7 +504,7 @@ const Checkout = () => {
                             <button 
                                 type="submit"
                                 form="checkout-form"
-                                disabled={loading || fetchingAddresses || (addresses.length === 0 && !selectedAddress) || (minimumOrderAmount > 0 && subtotal < minimumOrderAmount)}
+                                disabled={loading || fetchingAddresses || (addresses.length === 0 && !selectedAddress) || (minimumOrderAmount > 0 && subtotal < minimumOrderAmount) || !isRestaurantOpen()}
                                 className="btn-primary w-full h-16 text-xl tracking-tight !bg-white !text-primary hover:!bg-primary hover:!text-white shadow-2xl shadow-black/40 relative z-10 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {loading ? 'Processing...' : (formData.paymentMethod === 'ONLINE' ? 'Proceed to Pay' : 'Place Order')}
