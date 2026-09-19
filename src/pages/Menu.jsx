@@ -290,10 +290,10 @@ const Menu = () => {
                         </div>
 
                         {/* Menu Items Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-8 w-full min-w-0">
                             {filteredItems.map(item => (
-                                <div key={item.id} className="card-premium p-2.5 md:p-4 flex gap-2.5 md:gap-5 hover:border-primary/30 min-w-0">
-                                    <div className="w-[88px] h-[88px] sm:w-24 sm:h-24 md:w-40 md:h-40 rounded-xl md:rounded-2xl overflow-hidden flex-shrink-0 relative group">
+                                <div key={item.id} className="card-premium w-full max-w-full overflow-hidden p-2 md:p-4 flex gap-2 md:gap-5 hover:border-primary/30 min-w-0">
+                                    <div className="w-[76px] h-[76px] sm:w-24 sm:h-24 md:w-40 md:h-40 rounded-xl md:rounded-2xl overflow-hidden flex-shrink-0 relative group">
                                         <img src={item.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={item.name} />
                                         <div className="absolute top-1.5 left-1.5 md:top-2 md:left-2">
                                             {item.vegOrNonVeg === 'Veg' ? (
@@ -308,7 +308,7 @@ const Menu = () => {
                                         </div>
                                     </div>
                                     
-                                    <div className="flex-grow flex flex-col justify-between py-1">
+                                    <div className="flex-1 min-w-0 flex flex-col justify-between py-1">
                                         <div>
                                             <div className="flex justify-between items-start mb-0.5 md:mb-1">
                                                 <h3 className="text-base md:text-xl font-bold pr-2 leading-tight line-clamp-2">{item.name}</h3>
@@ -317,11 +317,11 @@ const Menu = () => {
                                             <p className="text-muted-foreground text-xs md:text-sm line-clamp-2 leading-snug">{item.description}</p>
                                         </div>
                                         
-                                        <div className="flex items-center justify-start mt-2 md:mt-4">
+                                        <div className="flex items-center justify-start mt-2 md:mt-4 min-w-0">
                                             <button 
                                                 onClick={() => handleAddToCart(item)}
                                                 disabled={addingItemId === item.id}
-                                                className="bg-primary/10 hover:bg-primary text-primary hover:text-white px-3 md:px-5 py-2 md:py-2.5 rounded-full font-bold transition-colors text-xs md:text-sm w-auto shadow-sm whitespace-nowrap"
+                                                className="inline-flex !w-auto max-w-fit flex-shrink-0 items-center bg-primary/10 hover:bg-primary text-primary hover:text-white px-3 md:px-5 py-2 md:py-2.5 rounded-full font-bold transition-colors text-xs md:text-sm shadow-sm whitespace-nowrap"
                                             >
                                                 {addingItemId === item.id ? 'Adding...' : 'Add to Cart +'}
                                             </button>
