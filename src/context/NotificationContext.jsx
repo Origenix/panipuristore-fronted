@@ -31,9 +31,10 @@ export const NotificationProvider = ({ children }) => {
     const token = localStorage.getItem("token");
     if (!token) return;
 
+    const wsBaseUrl = import.meta.env.VITE_WS_URL || "https://panipuristore.onrender.com/ws";
     const client = new Client({
       webSocketFactory: () =>
-        new SockJS("https://panipuristore.onrender.com/ws"),
+        new SockJS(wsBaseUrl),
       connectHeaders: {
         Authorization: `Bearer ${token}`,
       },
