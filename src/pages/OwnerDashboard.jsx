@@ -89,14 +89,17 @@ const OwnerDashboard = () => {
                 
                 if (restRes.data.length > 0) {
                     const restId = restRes.data[0].id;
-                    await fetchOrdersForRestaurant(restId);
-                    
-                    const [menuRes, catRes, reportRes] = await Promise.all([
+                    const [orderRes, menuRes, catRes, reportRes] = await Promise.all([
+                        axios.get(`/orders/restaurant/${restId}`),
                         axios.get(`/menu/restaurant/${restId}/all`),
                         axios.get('/categories/all'),
                         axios.get(`/reports/owner-dashboard/${restId}`)
                     ]);
                     if (isMounted) {
+                        setOrders(orderRes.data);
+                        setPreviousPendingCount(
+                            orderRes.data.filter(o => o.orderStatus === 'PENDING_CONFIRMATION').length
+                        );
                         setMenuItems(menuRes.data);
                         setCategories(catRes.data);
                         setOwnerReport(reportRes.data);
