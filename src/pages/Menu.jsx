@@ -332,19 +332,25 @@ const Menu = () => {
                         </div>
                     </div>
 
-                    {/* Desktop Quick Cart */}
-                    <div className="hidden lg:block w-96 sticky top-[100px]">
-                        <div className="bg-muted/50 border border-border rounded-[2rem] p-8 shadow-inner">
-                            <h3 className="text-2xl font-black mb-6 flex items-center gap-3">
-                                <ShoppingBag className="text-primary w-6 h-6" />
+                    {/* Responsive Quick Cart */}
+                    <div className="w-full lg:w-96 lg:sticky lg:top-[100px] mt-2 lg:mt-0">
+                        <div className="bg-muted/50 border border-border rounded-2xl lg:rounded-[2rem] p-3 sm:p-4 lg:p-8 shadow-inner">
+                            <h3 className="text-base sm:text-lg lg:text-2xl font-black mb-3 lg:mb-6 flex items-center gap-2 lg:gap-3">
+                                <ShoppingBag className="text-primary w-5 h-5 lg:w-6 lg:h-6" />
                                 Your Order
                             </h3>
-                            <div className="text-center py-12 px-4 bg-background rounded-3xl border border-border shadow-sm">
-                                <div className="bg-muted w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <ShoppingBag className="text-muted-foreground w-8 h-8 opacity-50" />
+                            <div className="flex items-center gap-3 sm:gap-4 lg:block text-left lg:text-center py-3 sm:py-4 lg:py-12 px-3 lg:px-4 bg-background rounded-xl lg:rounded-3xl border border-border shadow-sm">
+                                <div className="bg-muted w-11 h-11 sm:w-12 sm:h-12 lg:w-20 lg:h-20 rounded-full flex-shrink-0 flex items-center justify-center lg:mx-auto lg:mb-6">
+                                    <ShoppingBag className="text-muted-foreground w-5 h-5 lg:w-8 lg:h-8 opacity-50" />
                                 </div>
-                                <p className="text-muted-foreground font-medium text-sm mb-8">Craving something crispy and tangy? Add items to start your order.</p>
-                                <Link to="/cart" className="btn-primary w-full shadow-lg shadow-primary/20">Go to Cart</Link>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-muted-foreground font-medium text-xs sm:text-sm mb-2 lg:mb-8">
+                                        Craving something crispy and tangy? Add items to start your order.
+                                    </p>
+                                    <Link to="/cart" className="btn-primary inline-flex w-auto lg:w-full px-4 py-2.5 lg:py-3 text-xs sm:text-sm shadow-lg shadow-primary/20">
+                                        Go to Cart
+                                    </Link>
+                                </div>
                             </div>
                         </div>
                     </div>
