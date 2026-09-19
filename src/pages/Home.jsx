@@ -56,7 +56,7 @@ const Home = () => {
           .filter(item => item.trending === true)
           .map(item => ({...item, image: item.image || '/panipuri_hero_bg.jpg'}));
           
-        setMenuItems(trendingItems.slice(0, 4));
+        setMenuItems(trendingItems);
         setError(null);
       } catch (err) {
         console.error(err);
