@@ -103,9 +103,6 @@ const Checkout = () => {
         }
     };
 
-    const subtotalWithDelivery = subtotal + deliveryCharge;
-    const orderTotal = appliedCoupon ? Math.max(0, subtotalWithDelivery - appliedCoupon.discountAmount) : subtotalWithDelivery;
-
     const handlePlaceOrder = async (e) => {
         e.preventDefault();
         
@@ -250,6 +247,8 @@ const Checkout = () => {
     }
 
     const subtotal = cart.items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+    const subtotalWithDelivery = subtotal + deliveryCharge;
+    const orderTotal = appliedCoupon ? Math.max(0, subtotalWithDelivery - appliedCoupon.discountAmount) : subtotalWithDelivery;
 
     return (
         <div className="pt-28 pb-20 min-h-screen relative bg-background">
