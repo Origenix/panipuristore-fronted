@@ -105,6 +105,7 @@ const Navbar = () => {
                         <>
                             <Link to="/menu" className="font-bold text-foreground/80 hover:text-primary transition-colors">Our Menu</Link>
                             <Link to="/restaurants" className="font-bold text-foreground/80 hover:text-primary transition-colors">Restaurants</Link>
+                            {!user && <Link to="/subscription-plans" className="font-bold text-foreground/80 hover:text-primary transition-colors whitespace-nowrap">Restaurant Registration</Link>}
                         </>
                     )}
                     
@@ -229,6 +230,7 @@ const Navbar = () => {
                         ) : (
                             <div className="flex flex-col gap-3 pt-2">
                                 <Link onClick={() => setIsMobileMenuOpen(false)} to="/login" className="btn-secondary w-full text-center py-3.5">Log in</Link>
+                                <Link onClick={() => setIsMobileMenuOpen(false)} to="/subscription-plans" className="block px-4 py-3 text-lg font-bold rounded-2xl hover:bg-muted transition-colors">Restaurant Registration</Link>
                                 <Link onClick={() => setIsMobileMenuOpen(false)} to="/signup" className="btn-primary w-full text-center py-3.5">Sign up</Link>
                             </div>
                         )}
