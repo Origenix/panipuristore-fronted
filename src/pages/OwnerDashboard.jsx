@@ -383,13 +383,14 @@ const OwnerDashboard = () => {
                 : 'Restaurant opened. Customers can place orders again.');
         } catch (error) {
             if (error.response?.status === 401) {
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
-                toast.error('Your login session has expired. Please login again.');
-                window.location.href = '/login';
+                // Do not destroy a valid local session just because this request was rejected.
+                // The dashboard itself was loaded with the same authenticated session, so keep
+                // the user on the owner dashboard and report the actual API error instead.
+                console.error('Restaurant ordering toggle rejected with 401:', error.response?.data || error.message);
+                toast.error('Could not update restaurant status. Please refresh the dashboard and try again.');
                 return;
             }
-            toast.error(error.response?.data?.message || 'Failed to update restaurant ordering status');
+            toast.error(error.response?.data?.message || error.response?.data?.error || 'Failed to update restaurant ordering status');
         }
     };
 
