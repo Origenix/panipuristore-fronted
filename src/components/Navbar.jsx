@@ -183,7 +183,7 @@ const Navbar = () => {
             </div>
 
             {isMobileMenuOpen && (
-                <div className="md:hidden absolute top-full left-0 right-0 glass border-b border-border shadow-2xl animate-in slide-in-from-top-2 duration-300">
+                <div className="md:hidden absolute top-full left-0 right-0 bg-background border-b border-border shadow-2xl animate-in slide-in-from-top-2 duration-300">
                     <div className="p-6 space-y-2">
                         <div className="px-4 py-3 mb-2 bg-primary/5 rounded-2xl border border-primary/10">
                             <span className="text-[10px] font-black tracking-widest text-primary uppercase flex items-center gap-1 mb-1">
