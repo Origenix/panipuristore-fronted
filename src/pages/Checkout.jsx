@@ -30,6 +30,7 @@ const Checkout = () => {
     const [couponError, setCouponError] = useState('');
     const [couponLoading, setCouponLoading] = useState(false);
     const [minimumOrderAmount, setMinimumOrderAmount] = useState(0);
+    const [deliveryCharge, setDeliveryCharge] = useState(0);
 
     // Payment Gateway States
     const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -66,14 +67,17 @@ const Checkout = () => {
             const restaurantId = cart?.items?.[0]?.restaurantId;
             if (!restaurantId) {
                 setMinimumOrderAmount(0);
+                setDeliveryCharge(0);
                 return;
             }
             try {
                 const res = await axios.get(`/restaurants/public/${restaurantId}`);
                 setMinimumOrderAmount(Number(res.data.minimumOrderAmount || 0));
+                setDeliveryCharge(Number(res.data.deliveryCharge || 0));
             } catch (err) {
                 console.error("Failed to load minimum order amount", err);
                 setMinimumOrderAmount(0);
+                setDeliveryCharge(0);
             }
         };
         loadMinimumOrderAmount();
@@ -98,6 +102,9 @@ const Checkout = () => {
             setLoading(false);
         }
     };
+
+    const subtotalWithDelivery = subtotal + deliveryCharge;
+    const orderTotal = appliedCoupon ? Math.max(0, subtotalWithDelivery - appliedCoupon.discountAmount) : subtotalWithDelivery;
 
     const handlePlaceOrder = async (e) => {
         e.preventDefault();
@@ -445,11 +452,11 @@ const Checkout = () => {
                                 )}
                                 <div className="flex justify-between font-bold text-success">
                                     <span>Delivery Fee</span>
-                                    <span className="tracking-widest uppercase">Free</span>
+                                    <span>₹{deliveryCharge.toFixed(2)}</span>
                                 </div>
                                 <div className="flex justify-between text-4xl font-black mt-8">
                                     <span>Total</span>
-                                    <span className="text-primary tracking-tighter">₹{appliedCoupon ? Math.max(0, subtotal - appliedCoupon.discountAmount).toFixed(2) : subtotal}</span>
+                                    <span className="text-primary tracking-tighter">₹{orderTotal.toFixed(2)}</span>
                                 </div>
                             </div>
 
@@ -494,7 +501,7 @@ const Checkout = () => {
                         <div className="p-10">
                             <div className="flex justify-between items-center mb-10 pb-6 border-b border-border border-dashed">
                                 <span className="font-bold text-muted-foreground uppercase tracking-widest text-xs">Amount to pay</span>
-                                <span className="text-4xl font-black text-primary tracking-tighter">₹{subtotal}</span>
+                                <span className="text-4xl font-black text-primary tracking-tighter">₹{orderTotal.toFixed(2)}</span>
                             </div>
                             <form onSubmit={handlePaymentSubmit} className="space-y-6">
                                 <div>
