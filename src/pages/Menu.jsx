@@ -168,7 +168,7 @@ const Menu = () => {
 
             {/* Banner & Info */}
             <div className="section-padding !py-8">
-                <div className="relative h-[450px] rounded-[2rem] overflow-hidden mb-12 shadow-2xl group">
+                <div className="relative h-[300px] md:h-[450px] rounded-[1.5rem] md:rounded-[2rem] overflow-hidden mb-8 md:mb-12 shadow-2xl group">
                     <img 
                         src={restaurant.image || 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=1600&fit=crop'} 
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
@@ -176,7 +176,7 @@ const Menu = () => {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90"></div>
                     
-                    <div className="absolute top-6 right-6 flex gap-3">
+                    <div className="absolute top-4 right-4 md:top-6 md:right-6 flex gap-3">
                         <button 
                             onClick={handleToggleFavorite}
                             className={`glass p-3 rounded-full transition-all shadow-xl hover:scale-110 ${isFavorite ? 'text-primary bg-white' : 'hover:bg-white hover:text-primary text-white'}`}
@@ -185,17 +185,17 @@ const Menu = () => {
                         </button>
                     </div>
 
-                    <div className="absolute bottom-10 left-10 right-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+                    <div className="absolute bottom-6 left-5 right-5 md:bottom-10 md:left-10 md:right-10 flex flex-col md:flex-row md:items-end justify-between gap-4 md:gap-6">
                         <div className="text-white">
-                            <div className="flex items-center gap-3 mb-4">
+                            <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
                                 <span className="bg-primary text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">Top Rated</span>
                                 <div className="flex items-center gap-1.5 bg-success text-white px-3 py-1 rounded-full font-black text-sm">
                                     <Star className="w-4 h-4 fill-white" />
                                     {restaurant.rating?.toFixed(1) || '4.5'}
                                 </div>
                             </div>
-                            <h1 className="text-4xl sm:text-5xl md:text-7xl font-black mb-4 tracking-tighter drop-shadow-lg">{restaurant.name}</h1>
-                            <div className="flex flex-wrap items-center gap-4 md:gap-6 text-xs md:text-sm font-bold opacity-90">
+                            <h1 className="text-3xl sm:text-5xl md:text-7xl font-black mb-3 md:mb-4 tracking-tighter drop-shadow-lg line-clamp-2">{restaurant.name}</h1>
+                            <div className="flex flex-wrap items-center gap-2 md:gap-6 text-[11px] md:text-sm font-bold opacity-90">
                                 <span className="flex items-center gap-2"><MapPin className="text-primary w-5 h-5" /> {restaurant.location}</span>
                                 <span className="flex items-center gap-2"><Clock className="text-primary w-5 h-5" /> {restaurant.deliveryTime} mins avg</span>
                             </div>
@@ -290,10 +290,10 @@ const Menu = () => {
                         </div>
 
                         {/* Menu Items Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-8">
                             {filteredItems.map(item => (
-                                <div key={item.id} className="card-premium p-3 md:p-4 flex gap-3 md:gap-5 hover:border-primary/30">
-                                    <div className="w-24 h-24 md:w-40 md:h-40 rounded-xl md:rounded-2xl overflow-hidden flex-shrink-0 relative group">
+                                <div key={item.id} className="card-premium p-2.5 md:p-4 flex gap-2.5 md:gap-5 hover:border-primary/30 min-w-0">
+                                    <div className="w-[88px] h-[88px] sm:w-24 sm:h-24 md:w-40 md:h-40 rounded-xl md:rounded-2xl overflow-hidden flex-shrink-0 relative group">
                                         <img src={item.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={item.name} />
                                         <div className="absolute top-1.5 left-1.5 md:top-2 md:left-2">
                                             {item.vegOrNonVeg === 'Veg' ? (
@@ -313,15 +313,15 @@ const Menu = () => {
                                             <div className="flex justify-between items-start mb-0.5 md:mb-1">
                                                 <h3 className="text-base md:text-xl font-bold pr-2 leading-tight line-clamp-2">{item.name}</h3>
                                             </div>
-                                            <span className="text-primary font-black text-lg md:text-xl mb-1.5 md:mb-2 block">₹{item.price}</span>
+                                            <span className="text-primary font-black text-base md:text-xl mb-1 md:mb-2 block">₹{item.price}</span>
                                             <p className="text-muted-foreground text-xs md:text-sm line-clamp-2 leading-snug">{item.description}</p>
                                         </div>
                                         
-                                        <div className="flex items-center justify-between mt-2 md:mt-4">
+                                        <div className="flex items-center justify-start mt-2 md:mt-4">
                                             <button 
                                                 onClick={() => handleAddToCart(item)}
                                                 disabled={addingItemId === item.id}
-                                                className="bg-primary/10 hover:bg-primary text-primary hover:text-white px-3 md:px-5 py-3 md:py-2.5 rounded-full font-bold transition-colors text-xs md:text-sm w-full shadow-sm"
+                                                className="bg-primary/10 hover:bg-primary text-primary hover:text-white px-3 md:px-5 py-2 md:py-2.5 rounded-full font-bold transition-colors text-xs md:text-sm w-auto shadow-sm whitespace-nowrap"
                                             >
                                                 {addingItemId === item.id ? 'Adding...' : 'Add to Cart +'}
                                             </button>
