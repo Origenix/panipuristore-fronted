@@ -29,7 +29,6 @@ const Navbar = () => {
         const handleScroll = () => setIsScrolled(window.scrollY > 20);
         window.addEventListener('scroll', handleScroll);
         
-        // Fetch User Location
         const fetchLocation = async () => {
             const savedLocation = localStorage.getItem('userLocation');
             if (savedLocation) {
@@ -41,7 +40,6 @@ const Navbar = () => {
                 navigator.geolocation.getCurrentPosition(async (position) => {
                     try {
                         const { latitude, longitude } = position.coords;
-                        // Use fetch instead of axios to avoid base URL conflicts if axios is customized
                         const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
                         const data = await response.json();
                         
@@ -77,14 +75,13 @@ const Navbar = () => {
         }`}>
             <div className="max-w-7xl mx-auto px-4 md:px-12 flex items-center justify-between">
                 
-                {/* Brand Logo and Location */}
-                <div className="flex items-center gap-8">
-                    <Link to="/" className="flex items-center gap-2 md:gap-3 group">
-                        <div className="bg-primary p-2 md:p-2.5 rounded-xl md:rounded-2xl group-hover:rotate-12 transition-transform shadow-lg shadow-primary/20">
+                <div className="flex items-center gap-8 min-w-0">
+                    <Link to="/" className="flex items-center gap-2 md:gap-3 group min-w-0">
+                        <div className="bg-primary p-2 md:p-2.5 rounded-xl md:rounded-2xl group-hover:rotate-12 transition-transform shadow-lg shadow-primary/20 shrink-0">
                             <Store className="text-white w-5 h-5 md:w-6 md:h-6" strokeWidth={2.5} />
                         </div>
-                        <div className="flex flex-col">
-                            <span className="text-xl md:text-2xl font-black tracking-tight leading-none">
+                        <div className="flex flex-col min-w-0">
+                            <span className="text-xl md:text-2xl font-black tracking-tight leading-none whitespace-nowrap">
                                 PANIPURI<span className="text-primary">STORE</span>
                             </span>
                             <span className="text-[8px] md:text-[10px] font-bold tracking-[0.2em] text-muted-foreground uppercase mt-0.5">
@@ -93,7 +90,6 @@ const Navbar = () => {
                         </div>
                     </Link>
 
-                    {/* Location Display */}
                     <div className="hidden lg:flex flex-col cursor-pointer group">
                         <span className="text-[10px] font-black tracking-widest text-primary uppercase flex items-center gap-1">
                             <MapPin className="w-3 h-3" /> Delivering to
@@ -104,7 +100,6 @@ const Navbar = () => {
                     </div>
                 </div>
 
-                {/* Desktop Nav */}
                 <div className="hidden md:flex items-center gap-6">
                     {(!user || user.role === 'ROLE_CUSTOMER') && (
                         <>
@@ -131,7 +126,7 @@ const Navbar = () => {
                                         <Heart className="w-5 h-5 text-primary" />
                                     </Link>
 
-                                    <Link to="/cart" className="relative p-2.5 rounded-full bg-primary hover:bg-primary-hover text-white transition-all shadow-md shadow-primary/20 group hover:-translate-y-0.5">
+                                    <Link to="/cart" className="relative p-2.5 rounded-full bg-primary hover:bg-primary-hover text-white transition-all shadow-md shadow-primary/20 group hover:-translate-y-0.5" aria-label="Cart">
                                         <ShoppingBag className="w-5 h-5" />
                                         {cartItemsCount > 0 && (
                                             <span className="absolute -top-2 -right-2 bg-accent text-secondary text-[11px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-background shadow-sm animate-in zoom-in duration-300">
@@ -161,22 +156,34 @@ const Navbar = () => {
                     )}
                 </div>
 
-                {/* Mobile Menu Toggle */}
-                <div className="md:hidden flex items-center gap-3">
+                <div className="md:hidden flex items-center gap-2">
+                    {user?.role === 'ROLE_CUSTOMER' && (
+                        <Link
+                            to="/cart"
+                            aria-label="Cart"
+                            className="relative p-2.5 rounded-full bg-primary text-white shadow-md shadow-primary/20 shrink-0"
+                        >
+                            <ShoppingBag className="w-5 h-5" />
+                            {cartItemsCount > 0 && (
+                                <span className="absolute -top-1 -right-1 bg-accent text-secondary text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-background">
+                                    {cartItemsCount}
+                                </span>
+                            )}
+                        </Link>
+                    )}
                     <button 
-                        className="p-2 rounded-full bg-muted text-foreground"
+                        className="p-2 rounded-full bg-muted text-foreground shrink-0"
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                        aria-label="Open menu"
                     >
                         {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                     </button>
                 </div>
             </div>
 
-            {/* Mobile Menu Drawer (Settings & More) */}
             {isMobileMenuOpen && (
                 <div className="md:hidden absolute top-full left-0 right-0 glass border-b border-border shadow-2xl animate-in slide-in-from-top-2 duration-300">
                     <div className="p-6 space-y-2">
-                        {/* Mobile Location Display */}
                         <div className="px-4 py-3 mb-2 bg-primary/5 rounded-2xl border border-primary/10">
                             <span className="text-[10px] font-black tracking-widest text-primary uppercase flex items-center gap-1 mb-1">
                                 <MapPin className="w-3 h-3" /> Delivering to
@@ -209,6 +216,9 @@ const Navbar = () => {
                                         </Link>
                                         <Link onClick={() => setIsMobileMenuOpen(false)} to="/profile/addresses" className="block px-4 py-3 text-lg font-bold rounded-2xl hover:bg-muted transition-colors">
                                             My Addresses
+                                        </Link>
+                                        <Link onClick={() => setIsMobileMenuOpen(false)} to="/cart" className="block px-4 py-3 text-lg font-bold rounded-2xl hover:bg-muted transition-colors">
+                                            My Cart
                                         </Link>
                                     </>
                                 )}
