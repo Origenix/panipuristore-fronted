@@ -1,13 +1,12 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { ShoppingBag, Mail, Lock, ArrowRight, Github, Chrome, ShieldCheck, Flame } from 'lucide-react';
+import { Mail, Lock, ArrowRight, ShieldCheck, Flame } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import toast from 'react-hot-toast';
 
 const Login = () => {
     const [credentials, setCredentials] = useState({ email: '', password: '' });
-    const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     
     const { login, googleLogin } = useContext(AuthContext);
@@ -30,7 +29,11 @@ const Login = () => {
                 default: navigate('/');
             }
         } catch (err) {
-            toast.error(err.response?.data?.error || 'Invalid credentials. Please try again.');
+            if (err.response?.status === 503) {
+                toast.error('Server/database is temporarily unavailable. Please try again in a moment.');
+            } else {
+                toast.error(err.response?.data?.error || err.response?.data?.message || 'Invalid credentials. Please try again.');
+            }
         } finally {
             setLoading(false);
         }
