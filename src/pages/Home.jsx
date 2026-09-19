@@ -45,7 +45,7 @@ const Home = () => {
         setLoading(true);
         // Fetch categories and menu items
         const [res, catRes] = await Promise.all([
-            axios.get('/menu/public/restaurant/1'),
+            axios.get('/menu/public/all'),
             axios.get('/categories/public/active')
         ]);
         
