@@ -67,6 +67,19 @@
     @apply bg-muted hover:bg-border text-foreground px-6 py-3 rounded-full font-semibold transition-all active:scale-95 flex items-center justify-center gap-2;
   }
 
+
+  .global-button-locked {
+    pointer-events: none !important;
+    opacity: 0.65 !important;
+    cursor: wait !important;
+    transform: none !important;
+  }
+
+  .global-button-locked,
+  .global-button-locked * {
+    cursor: wait !important;
+  }
+
   .card-premium {
     @apply bg-card rounded-3xl border border-border overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1;
   }
