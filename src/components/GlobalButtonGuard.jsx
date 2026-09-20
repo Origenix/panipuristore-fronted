@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 
 const LOCK_ATTRIBUTE = 'data-global-click-locked';
+const NO_LOCK_ATTRIBUTE = 'data-no-global-click-lock';
 
 export default function GlobalButtonGuard() {
   useEffect(() => {
@@ -39,6 +40,10 @@ export default function GlobalButtonGuard() {
       const target = event.target;
       const button = target?.closest?.('button, [role="button"]');
       if (!button) return;
+
+      // Some controls are pure UI toggles (for example the mobile hamburger menu).
+      // They must stay instant and should never be blocked by API request protection.
+      if (button.closest(`[${NO_LOCK_ATTRIBUTE}="true"]`)) return;
 
       if (button.disabled) return;
 
