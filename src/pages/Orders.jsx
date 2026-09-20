@@ -136,6 +136,11 @@ const Orders = () => {
                                         <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black tracking-widest uppercase shadow-sm ${getStatusColor(order.orderStatus)}`}>
                                             {order.orderStatus.replace(/_/g, ' ')}
                                         </span>
+                                        {order.paymentMethod === 'UPI' && (
+                                            <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black tracking-widest uppercase ${order.paymentStatus === 'VERIFIED' ? 'text-success bg-success/10' : order.paymentStatus === 'REJECTED' ? 'text-danger bg-danger/10' : 'text-orange-500 bg-orange-500/10'}`}>
+                                                Payment: {order.paymentStatus === 'VERIFIED' ? 'VERIFIED' : order.paymentStatus === 'PROOF_UPLOADED' ? 'PROOF UPLOADED' : order.paymentStatus || 'PENDING'}
+                                            </span>
+                                        )}
                                     </div>
                                     <div className="flex flex-wrap items-center gap-6 text-sm font-bold text-muted-foreground">
                                         <span className="flex items-center gap-2"><Clock className="w-4 h-4 text-primary" /> {new Date(order.createdAt).toLocaleDateString()}</span>
