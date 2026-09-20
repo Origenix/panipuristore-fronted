@@ -448,7 +448,7 @@ const Checkout = () => {
                                         <span className="text-sm font-bold text-muted-foreground">Pay when food arrives.</span>
                                     </label>
                                     
-                                    <div className={`p-6 rounded-[2rem] border-2 border-border bg-muted/30 flex flex-col gap-3 relative opacity-60 cursor-not-allowed`}>
+                                    <label className={`p-6 rounded-[2rem] border-2 cursor-pointer transition-all flex flex-col gap-3 relative ${formData.paymentMethod === 'UPI' ? 'border-primary bg-primary/10 shadow-lg shadow-primary/10' : 'border-border bg-muted/30 hover:border-primary/50'}`}>
                                         <div className="absolute top-4 right-4 bg-accent text-secondary text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-sm">
                                             UPI
                                         </div>
@@ -467,7 +467,7 @@ const Checkout = () => {
                                         </div>
                                         <span className="font-black text-xl mt-2">Pay Online</span>
                                         <span className="text-sm font-bold text-muted-foreground">Pay securely using UPI QR or UPI apps.</span>
-                                    </div>
+                                    </label>
                                 </div>
                             </form>
                         </div>
@@ -578,7 +578,7 @@ const Checkout = () => {
                                 disabled={loading || fetchingAddresses || (addresses.length === 0 && !selectedAddress) || (minimumOrderAmount > 0 && subtotal < minimumOrderAmount) || !isRestaurantOpen()}
                                 className="btn-primary w-full h-16 text-xl tracking-tight !bg-white !text-primary hover:!bg-primary hover:!text-white shadow-2xl shadow-black/40 relative z-10 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {loading ? 'Processing...' : (restaurantManualClosed ? 'Restaurant Closed' : (formData.paymentMethod === 'ONLINE' ? 'Proceed to Pay' : 'Place Order'))}
+                                {loading ? 'Processing...' : (restaurantManualClosed ? 'Restaurant Closed' : (formData.paymentMethod === 'UPI' ? 'Proceed to Pay' : 'Place Order'))}
                             </button>
                             
                             <div className="mt-8 flex items-center gap-2 text-[11px] font-black uppercase tracking-widest opacity-50 justify-center relative z-10">
