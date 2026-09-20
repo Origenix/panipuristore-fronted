@@ -42,6 +42,7 @@ const Checkout = () => {
     const [paymentConfig, setPaymentConfig] = useState({ upiId: '', payeeName: 'PanipuriStore' });
     const [showProofModal, setShowProofModal] = useState(false);
     const [paymentProofFile, setPaymentProofFile] = useState(null);
+    const [paymentConfirmed, setPaymentConfirmed] = useState(false);
     const [proofUploading, setProofUploading] = useState(false);
 
     // Error Modal States
@@ -254,25 +255,57 @@ const Checkout = () => {
         }, 1400);
     };
 
-    const handlePaymentDone = () => { setShowPaymentModal(false); setShowProofModal(true); };
+    const handlePaymentDone = () => {
+        setShowPaymentModal(false);
+        setPaymentProofFile(null);
+        setPaymentConfirmed(false);
+        setShowProofModal(true);
+    };
 
     const uploadPaymentProof = async () => {
-        if (!paymentOrder?.id || !paymentProofFile) { toast.error('Please select your payment screenshot first.'); return; }
+        if (!paymentConfirmed) {
+            toast.error('Please confirm that you have successfully completed the UPI payment.');
+            return;
+        }
+        if (!paymentOrder?.id || !paymentProofFile) {
+            toast.error('Please select your payment screenshot first.');
+            return;
+        }
         setProofUploading(true);
         try {
-            const form = new FormData(); form.append('file', paymentProofFile);
-            await axios.post('/orders/' + paymentOrder.id + '/payment-screenshot', form, { headers: { 'Content-Type': 'multipart/form-data' } });
-            toast.success('Payment proof uploaded. Your order is waiting for verification.');
-            setShowProofModal(false); setPaymentProofFile(null); fetchCart(); setOrderSuccess(true);
+            const form = new FormData();
+            form.append('file', paymentProofFile);
+            form.append('confirmed', 'true');
+            await axios.post('/orders/' + paymentOrder.id + '/payment-screenshot', form, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            toast.success('Payment proof uploaded. Your order has been placed and is waiting for payment verification.');
+            setShowProofModal(false);
+            setPaymentProofFile(null);
+            setPaymentConfirmed(false);
+            fetchCart();
+            setOrderSuccess(true);
             setTimeout(() => navigate('/orders'), 1000);
-        } catch (err) { toast.error(err.response?.data?.message || err.response?.data?.error || 'Failed to upload payment screenshot'); }
-        finally { setProofUploading(false); }
+        } catch (err) {
+            toast.error(err.response?.data?.message || err.response?.data?.error || 'Failed to upload payment screenshot');
+        } finally {
+            setProofUploading(false);
+        }
     };
 
     const openWhatsAppPayment = async () => {
         if (!paymentOrder) return;
         const message = 'PanipuriStore Payment Proof\\nOrder: ' + paymentOrder.orderNumber + '\\nAmount: ₹' + Number(paymentOrder.totalAmount).toFixed(2) + '\\nI have completed the UPI payment. Please verify my payment and confirm the order.';
-        const whatsappUrl = 'https://wa.me/91916585797?text=' + encodeURIComponent(message);
+        if (!paymentConfirmed) {
+            toast.error('Please confirm the payment first.');
+            return;
+        }
+        if (!paymentProofFile) {
+            toast.error('Please select the payment screenshot first.');
+            return;
+        }
+
+        const whatsappUrl = 'https://wa.me/919165685797?text=' + encodeURIComponent(message);
 
         // On supported mobile browsers, share the selected screenshot directly with the
         // WhatsApp share target. The browser/OS decides the final app; it cannot be
@@ -624,10 +657,24 @@ const Checkout = () => {
     { name: 'Google Pay', logo: 'https://cdn.simpleicons.org/googlepay', alt: 'Google Pay' },
     { name: 'PhonePe', logo: 'https://cdn.simpleicons.org/phonepe', alt: 'PhonePe' },
     { name: 'Paytm', logo: 'https://cdn.simpleicons.org/paytm', alt: 'Paytm' },
-    { name: 'BHIM', logo: 'https://cdn.simpleicons.org/bhim', alt: 'BHIM UPI' }
+    { name: 'BHIM', logo: 'https://cdn.simpleicons.org/bhim', fallbackLogo: 'https://cdn.simpleicons.org/upi', alt: 'BHIM UPI' }
 ].map(app => (
     <button key={app.name} type="button" onClick={() => openUpiApp(app)} className="p-4 rounded-2xl border-2 border-border hover:border-primary hover:bg-primary/5 font-black transition-all flex flex-col items-center justify-center gap-2 bg-card text-foreground">
-        <img src={app.logo} alt={app.alt} className="w-10 h-10 object-contain" loading="lazy" />
+        <img
+            src={app.logo}
+            alt={app.alt}
+            className="w-10 h-10 object-contain"
+            loading="lazy"
+            onError={(e) => {
+                if (app.fallbackLogo && e.currentTarget.src !== app.fallbackLogo) {
+                    e.currentTarget.src = app.fallbackLogo;
+                    return;
+                }
+                e.currentTarget.style.display = 'none';
+                if (e.currentTarget.nextElementSibling) e.currentTarget.nextElementSibling.classList.remove('hidden');
+            }}
+        />
+        <span className="hidden w-10 h-10 rounded-xl bg-muted text-primary items-center justify-center text-[10px] font-black">{app.name === 'BHIM' ? 'BHIM' : 'UPI'}</span>
         <span>{app.name}</span>
     </button>
 ))}
@@ -635,7 +682,9 @@ const Checkout = () => {
                             <div className="text-center text-xs font-black uppercase tracking-widest text-muted-foreground">OR PAY VIA QR CODE</div>
                             {paymentConfig.upiId ? <div className="flex flex-col items-center gap-3"><img src={'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(buildUpiUri(paymentConfig.upiId, paymentOrder.totalAmount, paymentOrder.orderNumber))} alt="Dynamic UPI QR Code" className="w-64 h-64 rounded-2xl border border-border p-2 bg-white" /><p className="text-sm font-bold text-muted-foreground">Scan to pay exactly ₹{Number(paymentOrder.totalAmount).toFixed(2)}</p></div> : <p className="text-center text-danger font-bold">UPI ID is not configured yet.</p>}
                             <button type="button" onClick={handlePaymentDone} className="btn-primary w-full h-14 text-lg font-black">I Have Paid</button>
-                            <p className="text-xs text-muted-foreground text-center">After payment, upload the screenshot or send payment details on WhatsApp.</p>
+                            <p className="text-xs text-muted-foreground text-center">
+                                After payment, click "I Have Paid" and submit your payment screenshot. Your order is not finalized until the screenshot is uploaded.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -645,13 +694,83 @@ const Checkout = () => {
             {showProofModal && paymentOrder && (
                 <div className="fixed inset-0 z-[55] flex items-center justify-center p-4 bg-background/90 backdrop-blur-md">
                     <div className="bg-card w-full max-w-lg rounded-[2rem] shadow-2xl border border-border p-7">
-                        <div className="flex items-center justify-between mb-6"><div><h2 className="text-2xl font-black">Payment Proof</h2><p className="text-sm text-muted-foreground font-bold mt-1">Order #{paymentOrder.orderNumber}</p></div><button onClick={() => setShowProofModal(false)} className="p-2 rounded-full bg-muted"><X className="w-5 h-5" /></button></div>
-                        <label className="block p-6 rounded-2xl border-2 border-dashed border-primary/40 text-center cursor-pointer hover:bg-primary/5"><input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={e => setPaymentProofFile(e.target.files?.[0] || null)} /><div className="font-black text-lg">{paymentProofFile ? paymentProofFile.name : 'Upload Payment Screenshot'}</div><div className="text-xs text-muted-foreground mt-2">JPG, PNG or WEBP • Maximum 8 MB</div></label>
-                        <button type="button" onClick={uploadPaymentProof} disabled={!paymentProofFile || proofUploading} className="btn-primary w-full h-14 mt-5 font-black disabled:opacity-50">{proofUploading ? 'Uploading...' : 'Upload Screenshot'}</button>
-                        <div className="flex items-center gap-3 my-5"><div className="h-px bg-border flex-1"></div><span className="text-xs font-black text-muted-foreground">OR</span><div className="h-px bg-border flex-1"></div></div>
-                        <button type="button" onClick={openWhatsAppPayment} className="w-full h-14 rounded-xl bg-green-600 text-white font-black hover:bg-green-700 transition-colors flex items-center justify-center gap-3">
+                        <div className="flex items-center justify-between mb-6">
+                            <div>
+                                <h2 className="text-2xl font-black">Payment Proof</h2>
+                                <p className="text-sm text-muted-foreground font-bold mt-1">Order #{paymentOrder.orderNumber}</p>
+                            </div>
+                            <button onClick={() => setShowProofModal(false)} className="p-2 rounded-full bg-muted"><X className="w-5 h-5" /></button>
+                        </div>
+
+                        <div className="p-4 rounded-2xl bg-primary/5 border border-primary/20 mb-5">
+                            <label className="flex items-start gap-3 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={paymentConfirmed}
+                                    onChange={e => setPaymentConfirmed(e.target.checked)}
+                                    className="mt-1 w-5 h-5 accent-primary shrink-0"
+                                />
+                                <span className="text-sm font-bold leading-6">
+                                    I confirm that I have successfully completed the UPI payment. If I have not completed the payment, I agree that the payment/order may be cancelled.
+                                </span>
+                            </label>
+                        </div>
+
+                        <label className="block p-6 rounded-2xl border-2 border-dashed border-primary/40 text-center cursor-pointer hover:bg-primary/5">
+                            <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={e => setPaymentProofFile(e.target.files?.[0] || null)} />
+                            <div className="font-black text-lg">{paymentProofFile ? paymentProofFile.name : 'Upload Payment Screenshot'}</div>
+                            <div className="text-xs text-muted-foreground mt-2">JPG, PNG or WEBP • Maximum 8 MB</div>
+                        </label>
+
+                        <button
+                            type="button"
+                            onClick={uploadPaymentProof}
+                            disabled={!paymentConfirmed || !paymentProofFile || proofUploading}
+                            className="btn-primary w-full h-14 mt-5 font-black disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {proofUploading ? 'Uploading...' : 'Upload Screenshot & Place Order'}
+                        </button>
+
+                        <div className="flex items-center gap-3 my-5">
+                            <div className="h-px bg-border flex-1"></div>
+                            <span className="text-xs font-black text-muted-foreground">OR</span>
+                            <div className="h-px bg-border flex-1"></div>
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={openWhatsAppPayment}
+                            disabled={!paymentConfirmed || !paymentProofFile}
+                            className="w-full h-14 rounded-xl bg-green-600 text-white font-black hover:bg-green-700 transition-colors flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
                             <img src="https://cdn.simpleicons.org/whatsapp/ffffff" alt="" className="w-6 h-6" />
-                            {paymentProofFile ? 'Send Screenshot + Details on WhatsApp' : 'Send Payment Details via WhatsApp'}
+                            Send Screenshot + Details on WhatsApp
+                        </button>
+
+                        <p className="text-xs text-muted-foreground text-center mt-4">
+                            WhatsApp sharing only sends the proof to the selected number. To finalize this order on the website, the screenshot must also be uploaded here.
+                        </p>
+
+                        <button
+                            type="button"
+                            onClick={async () => {
+                                if (!paymentOrder?.id) return;
+                                try {
+                                    await axios.put('/orders/' + paymentOrder.id + '/cancel-payment');
+                                    setShowProofModal(false);
+                                    setShowPaymentModal(false);
+                                    setPaymentOrder(null);
+                                    setPaymentProofFile(null);
+                                    setPaymentConfirmed(false);
+                                    toast.success('Payment cancelled. Your cart is still available.');
+                                } catch (err) {
+                                    toast.error(err.response?.data?.message || err.response?.data?.error || 'Unable to cancel payment');
+                                }
+                            }}
+                            disabled={proofUploading}
+                            className="w-full mt-3 h-12 rounded-xl border border-danger/30 text-danger font-black hover:bg-danger/10 transition-colors disabled:opacity-50"
+                        >
+                            Cancel Payment
                         </button>
                     </div>
                 </div>
