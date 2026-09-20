@@ -269,10 +269,28 @@ const Checkout = () => {
         finally { setProofUploading(false); }
     };
 
-    const openWhatsAppPayment = () => {
+    const openWhatsAppPayment = async () => {
         if (!paymentOrder) return;
-        const text = encodeURIComponent('PanipuriStore Payment Proof\nOrder: ' + paymentOrder.orderNumber + '\nAmount: ₹' + Number(paymentOrder.totalAmount).toFixed(2) + '\nI have completed the UPI payment.');
-        window.open('https://wa.me/?text=' + text, '_blank', 'noopener,noreferrer');
+        const message = 'PanipuriStore Payment Proof\\nOrder: ' + paymentOrder.orderNumber + '\\nAmount: ₹' + Number(paymentOrder.totalAmount).toFixed(2) + '\\nI have completed the UPI payment. Please verify my payment and confirm the order.';
+        const whatsappUrl = 'https://wa.me/91916585797?text=' + encodeURIComponent(message);
+
+        // On supported mobile browsers, share the selected screenshot directly with the
+        // WhatsApp share target. The browser/OS decides the final app; it cannot be
+        // forced to a specific app for security reasons.
+        if (paymentProofFile && navigator.share && navigator.canShare) {
+            try {
+                const shareData = { title: 'PanipuriStore Payment Proof', text: message, files: [paymentProofFile] };
+                if (navigator.canShare({ files: [paymentProofFile] })) {
+                    await navigator.share(shareData);
+                    return;
+                }
+            } catch (error) {
+                if (error?.name === 'AbortError') return;
+            }
+        }
+
+        // Fallback opens the exact WhatsApp number with the prepared message.
+        window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
     };
 
     const getIconForType = (type) => {
@@ -602,7 +620,17 @@ const Checkout = () => {
                         <div className="p-6 md:p-8 space-y-6">
                             <div className="flex justify-between items-center p-5 rounded-2xl bg-primary/5 border border-primary/20"><span className="font-black text-muted-foreground uppercase tracking-widest text-xs">Amount to pay</span><span className="text-3xl font-black text-primary">₹{Number(paymentOrder.totalAmount).toFixed(2)}</span></div>
                             <div className="grid grid-cols-2 gap-3">
-                                {['Google Pay', 'PhonePe', 'Paytm', 'BHIM'].map(app => <button key={app} type="button" onClick={() => openUpiApp(app)} className="p-4 rounded-2xl border-2 border-border hover:border-primary hover:bg-primary/5 font-black transition-all">{app}</button>)}
+                                {[
+    { name: 'Google Pay', logo: 'https://cdn.simpleicons.org/googlepay', alt: 'Google Pay' },
+    { name: 'PhonePe', logo: 'https://cdn.simpleicons.org/phonepe', alt: 'PhonePe' },
+    { name: 'Paytm', logo: 'https://cdn.simpleicons.org/paytm', alt: 'Paytm' },
+    { name: 'BHIM', logo: 'https://cdn.simpleicons.org/bhim', alt: 'BHIM UPI' }
+].map(app => (
+    <button key={app.name} type="button" onClick={() => openUpiApp(app)} className="p-4 rounded-2xl border-2 border-border hover:border-primary hover:bg-primary/5 font-black transition-all flex flex-col items-center justify-center gap-2 bg-card text-foreground">
+        <img src={app.logo} alt={app.alt} className="w-10 h-10 object-contain" loading="lazy" />
+        <span>{app.name}</span>
+    </button>
+))}
                             </div>
                             <div className="text-center text-xs font-black uppercase tracking-widest text-muted-foreground">OR PAY VIA QR CODE</div>
                             {paymentConfig.upiId ? <div className="flex flex-col items-center gap-3"><img src={'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(buildUpiUri(paymentConfig.upiId, paymentOrder.totalAmount, paymentOrder.orderNumber))} alt="Dynamic UPI QR Code" className="w-64 h-64 rounded-2xl border border-border p-2 bg-white" /><p className="text-sm font-bold text-muted-foreground">Scan to pay exactly ₹{Number(paymentOrder.totalAmount).toFixed(2)}</p></div> : <p className="text-center text-danger font-bold">UPI ID is not configured yet.</p>}
@@ -621,7 +649,10 @@ const Checkout = () => {
                         <label className="block p-6 rounded-2xl border-2 border-dashed border-primary/40 text-center cursor-pointer hover:bg-primary/5"><input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={e => setPaymentProofFile(e.target.files?.[0] || null)} /><div className="font-black text-lg">{paymentProofFile ? paymentProofFile.name : 'Upload Payment Screenshot'}</div><div className="text-xs text-muted-foreground mt-2">JPG, PNG or WEBP • Maximum 8 MB</div></label>
                         <button type="button" onClick={uploadPaymentProof} disabled={!paymentProofFile || proofUploading} className="btn-primary w-full h-14 mt-5 font-black disabled:opacity-50">{proofUploading ? 'Uploading...' : 'Upload Screenshot'}</button>
                         <div className="flex items-center gap-3 my-5"><div className="h-px bg-border flex-1"></div><span className="text-xs font-black text-muted-foreground">OR</span><div className="h-px bg-border flex-1"></div></div>
-                        <button type="button" onClick={openWhatsAppPayment} className="w-full h-14 rounded-xl bg-green-600 text-white font-black hover:bg-green-700 transition-colors">Send Payment Details via WhatsApp</button>
+                        <button type="button" onClick={openWhatsAppPayment} className="w-full h-14 rounded-xl bg-green-600 text-white font-black hover:bg-green-700 transition-colors flex items-center justify-center gap-3">
+                            <img src="https://cdn.simpleicons.org/whatsapp/ffffff" alt="" className="w-6 h-6" />
+                            {paymentProofFile ? 'Send Screenshot + Details on WhatsApp' : 'Send Payment Details via WhatsApp'}
+                        </button>
                     </div>
                 </div>
             )}
