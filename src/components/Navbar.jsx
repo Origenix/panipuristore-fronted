@@ -175,7 +175,8 @@ const Navbar = () => {
                     <button 
                         className="p-2 rounded-full bg-muted text-foreground shrink-0"
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                        aria-label="Open menu"
+                        aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+                        data-no-global-click-lock="true"
                     >
                         {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                     </button>
