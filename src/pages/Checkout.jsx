@@ -162,8 +162,26 @@ const Checkout = () => {
             return;
         }
 
-        if (formData.paymentMethod === 'ONLINE') {
-            setShowPaymentModal(true);
+        if (formData.paymentMethod === 'UPI') {
+            setLoading(true);
+            try {
+                const formattedDeliveryAddress = `${selectedAddress.addressType} - ${selectedAddress.fullName}, ${selectedAddress.houseNo}, ${selectedAddress.area}${selectedAddress.landmark ? ', Landmark: ' + selectedAddress.landmark : ''}, ${selectedAddress.city}, ${selectedAddress.state} - ${selectedAddress.pinCode}. Mob: ${selectedAddress.mobileNumber}.${selectedAddress.deliveryNote ? ' Note: ' + selectedAddress.deliveryNote : ''}`;
+                const response = await axios.post('/orders/place', {
+                    deliveryAddress: formattedDeliveryAddress,
+                    paymentMethod: 'UPI',
+                    latitude: selectedAddress.latitude,
+                    longitude: selectedAddress.longitude,
+                    couponCode: appliedCoupon ? appliedCoupon.code : null
+                });
+                setPaymentOrder(response.data);
+                const config = await axios.get('/payment/config');
+                setPaymentConfig(config.data);
+                setShowPaymentModal(true);
+            } catch (err) {
+                handleRuntimeError(err);
+            } finally {
+                setLoading(false);
+            }
             return;
         }
 
