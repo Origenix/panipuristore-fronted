@@ -38,7 +38,11 @@ const Checkout = () => {
     // Payment Gateway States
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [paymentProcessing, setPaymentProcessing] = useState(false);
-    const [cardDetails, setCardDetails] = useState({ number: '', expiry: '', cvv: '' });
+    const [paymentOrder, setPaymentOrder] = useState(null);
+    const [paymentConfig, setPaymentConfig] = useState({ upiId: '', payeeName: 'PanipuriStore' });
+    const [showProofModal, setShowProofModal] = useState(false);
+    const [paymentProofFile, setPaymentProofFile] = useState(null);
+    const [proofUploading, setProofUploading] = useState(false);
 
     // Error Modal States
     const [showErrorModal, setShowErrorModal] = useState(false);
@@ -204,21 +208,53 @@ const Checkout = () => {
 
     const handlePaymentSubmit = (e) => {
         e.preventDefault();
-        setPaymentProcessing(true);
-        
-        // Simulate payment gateway delay
-        setTimeout(() => {
-            setPaymentProcessing(false);
-            
-            if (cardDetails.cvv === '000') {
-                setShowPaymentModal(false);
-                handleRuntimeError(new Error("PAYMENT_GATEWAY_TIMEOUT: Downstream bank server did not respond in time. Failed to acquire token."));
-                return;
-            }
+    };
 
-            setShowPaymentModal(false);
-            executeOrder();
-        }, 2000);
+    const buildUpiUri = (upiId, amount, orderNumber) => {
+        const params = new URLSearchParams({
+            pa: upiId, pn: paymentConfig.payeeName || 'PanipuriStore', tr: orderNumber,
+            tn: 'PanipuriStore ' + orderNumber, am: Number(amount).toFixed(2), cu: 'INR'
+        });
+        return 'upi://pay?' + params.toString();
+    };
+
+    const openUpiApp = (app) => {
+        if (!paymentOrder || !paymentConfig.upiId) { toast.error('UPI payment is temporarily unavailable.'); return; }
+        const baseUri = buildUpiUri(paymentConfig.upiId, paymentOrder.totalAmount, paymentOrder.orderNumber);
+        const query = baseUri.substring(baseUri.indexOf('?') + 1);
+        const schemes = { 'Google Pay': 'tez://upi/pay?', 'PhonePe': 'phonepe://pay?', 'Paytm': 'paytmmp://pay?', 'BHIM': 'upi://pay?' };
+        const target = (schemes[app] || 'upi://pay?') + query;
+        let leftPage = false;
+        const markLeft = () => { leftPage = true; };
+        document.addEventListener('visibilitychange', markLeft, { once: true });
+        window.addEventListener('blur', markLeft, { once: true });
+        window.location.href = target;
+        setTimeout(() => {
+            document.removeEventListener('visibilitychange', markLeft);
+            window.removeEventListener('blur', markLeft);
+            if (!leftPage && document.visibilityState === 'visible') toast.error('This UPI app is not installed on your phone, please try another option or QR code.', { duration: 5000 });
+        }, 1400);
+    };
+
+    const handlePaymentDone = () => { setShowPaymentModal(false); setShowProofModal(true); };
+
+    const uploadPaymentProof = async () => {
+        if (!paymentOrder?.id || !paymentProofFile) { toast.error('Please select your payment screenshot first.'); return; }
+        setProofUploading(true);
+        try {
+            const form = new FormData(); form.append('file', paymentProofFile);
+            await axios.post('/orders/' + paymentOrder.id + '/payment-screenshot', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+            toast.success('Payment proof uploaded. Your order is waiting for verification.');
+            setShowProofModal(false); setPaymentProofFile(null); fetchCart(); setOrderSuccess(true);
+            setTimeout(() => navigate('/orders'), 1000);
+        } catch (err) { toast.error(err.response?.data?.message || err.response?.data?.error || 'Failed to upload payment screenshot'); }
+        finally { setProofUploading(false); }
+    };
+
+    const openWhatsAppPayment = () => {
+        if (!paymentOrder) return;
+        const text = encodeURIComponent('PanipuriStore Payment Proof\nOrder: ' + paymentOrder.orderNumber + '\nAmount: ₹' + Number(paymentOrder.totalAmount).toFixed(2) + '\nI have completed the UPI payment.');
+        window.open('https://wa.me/?text=' + text, '_blank', 'noopener,noreferrer');
     };
 
     const getIconForType = (type) => {
@@ -396,22 +432,23 @@ const Checkout = () => {
                                     
                                     <div className={`p-6 rounded-[2rem] border-2 border-border bg-muted/30 flex flex-col gap-3 relative opacity-60 cursor-not-allowed`}>
                                         <div className="absolute top-4 right-4 bg-accent text-secondary text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-sm">
-                                            Coming Soon
+                                            UPI
                                         </div>
                                         <div className="flex justify-between items-center w-full">
                                             <input 
                                                 type="radio" 
                                                 name="paymentMethod" 
-                                                value="ONLINE" 
-                                                disabled
-                                                className="w-5 h-5 accent-primary cursor-not-allowed"
+                                                value="UPI"
+                                                checked={formData.paymentMethod === 'UPI'}
+                                                onChange={handleChange}
+                                                className="w-5 h-5 accent-primary cursor-pointer"
                                             />
                                             <div className={`p-3 rounded-xl bg-background text-muted-foreground`}>
                                                 <Wallet className="w-6 h-6" />
                                             </div>
                                         </div>
                                         <span className="font-black text-xl mt-2">Pay Online</span>
-                                        <span className="text-sm font-bold text-muted-foreground">Cards, UPI & Net Banking.</span>
+                                        <span className="text-sm font-bold text-muted-foreground">Pay securely using UPI QR or UPI apps.</span>
                                     </div>
                                 </div>
                             </form>
@@ -535,81 +572,41 @@ const Checkout = () => {
                 </div>
             </div>
 
-            {/* Payment Gateway Modal */}
-            {showPaymentModal && (
+            {/* UPI Payment Modal */}
+            {showPaymentModal && paymentOrder && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-md">
-                    <div className="bg-card w-full max-w-md rounded-[3rem] shadow-2xl overflow-hidden border border-border animate-in zoom-in-95 duration-300">
-                        <div className="bg-primary p-8 text-white text-center relative overflow-hidden">
-                            <div className="absolute inset-0 bg-black/10"></div>
-                            <button onClick={() => setShowPaymentModal(false)} className="absolute top-6 right-6 text-white/70 hover:text-white relative z-10 p-2 bg-black/20 rounded-full">
-                                <X className="w-5 h-5" />
-                            </button>
-                            <ShieldCheck className="w-14 h-14 mx-auto mb-4 relative z-10" />
-                            <h2 className="text-3xl font-black tracking-tight relative z-10">Secure Payment</h2>
-                            <p className="opacity-90 font-bold text-sm tracking-widest uppercase mt-2 relative z-10">PanipuriStore Pay</p>
+                    <div className="bg-card w-full max-w-lg max-h-[92vh] overflow-y-auto rounded-[2rem] shadow-2xl border border-border">
+                        <div className="bg-primary p-7 text-white text-center relative">
+                            <button onClick={() => setShowPaymentModal(false)} className="absolute top-5 right-5 p-2 bg-black/20 rounded-full"><X className="w-5 h-5" /></button>
+                            <ShieldCheck className="w-12 h-12 mx-auto mb-3" /><h2 className="text-2xl font-black">Pay via UPI</h2>
+                            <p className="font-bold opacity-90 mt-1">Order #{paymentOrder.orderNumber}</p>
                         </div>
-                        <div className="p-10">
-                            <div className="flex justify-between items-center mb-10 pb-6 border-b border-border border-dashed">
-                                <span className="font-bold text-muted-foreground uppercase tracking-widest text-xs">Amount to pay</span>
-                                <span className="text-4xl font-black text-primary tracking-tighter">₹{orderTotal.toFixed(2)}</span>
+                        <div className="p-6 md:p-8 space-y-6">
+                            <div className="flex justify-between items-center p-5 rounded-2xl bg-primary/5 border border-primary/20"><span className="font-black text-muted-foreground uppercase tracking-widest text-xs">Amount to pay</span><span className="text-3xl font-black text-primary">₹{Number(paymentOrder.totalAmount).toFixed(2)}</span></div>
+                            <div className="grid grid-cols-2 gap-3">
+                                {['Google Pay', 'PhonePe', 'Paytm', 'BHIM'].map(app => <button key={app} type="button" onClick={() => openUpiApp(app)} className="p-4 rounded-2xl border-2 border-border hover:border-primary hover:bg-primary/5 font-black transition-all">{app}</button>)}
                             </div>
-                            <form onSubmit={handlePaymentSubmit} className="space-y-6">
-                                <div>
-                                    <label className="block text-[11px] font-black uppercase tracking-widest text-muted-foreground mb-3">Card Number</label>
-                                    <input 
-                                        type="text" 
-                                        required
-                                        placeholder="0000 0000 0000 0000" 
-                                        className="input-premium font-mono tracking-widest h-14 text-lg"
-                                        value={cardDetails.number}
-                                        onChange={e => setCardDetails({...cardDetails, number: e.target.value})}
-                                    />
-                                </div>
-                                <div className="flex gap-6">
-                                    <div className="flex-1">
-                                        <label className="block text-[11px] font-black uppercase tracking-widest text-muted-foreground mb-3">Expiry</label>
-                                        <input 
-                                            type="text" 
-                                            required
-                                            placeholder="MM/YY" 
-                                            className="input-premium font-mono h-14 text-lg text-center"
-                                            value={cardDetails.expiry}
-                                            onChange={e => setCardDetails({...cardDetails, expiry: e.target.value})}
-                                        />
-                                    </div>
-                                    <div className="flex-1">
-                                        <label className="block text-[11px] font-black uppercase tracking-widest text-muted-foreground mb-3">CVV</label>
-                                        <input 
-                                            type="password" 
-                                            required
-                                            placeholder="•••" 
-                                            maxLength="3"
-                                            className="input-premium font-mono h-14 text-lg text-center"
-                                            value={cardDetails.cvv}
-                                            onChange={e => setCardDetails({...cardDetails, cvv: e.target.value})}
-                                        />
-                                    </div>
-                                </div>
-                                <p className="text-xs text-muted-foreground font-medium text-center mt-6 flex items-center justify-center gap-1.5 p-3 bg-muted rounded-xl">
-                                    <AlertTriangle className="w-4 h-4 text-primary" /> Enter CVV <strong className="text-primary font-black">000</strong> to trigger dev error.
-                                </p>
-                                <button 
-                                    type="submit" 
-                                    disabled={paymentProcessing}
-                                    className="btn-primary w-full h-16 text-xl mt-6 flex items-center justify-center gap-3 shadow-xl shadow-primary/20"
-                                >
-                                    {paymentProcessing ? (
-                                        <><div className="animate-spin rounded-full h-6 w-6 border-4 border-white border-t-transparent"></div> Processing...</>
-                                    ) : (
-                                        <><Fingerprint className="w-6 h-6" /> Authenticate & Pay</>
-                                    )}
-                                </button>
-                            </form>
+                            <div className="text-center text-xs font-black uppercase tracking-widest text-muted-foreground">OR PAY VIA QR CODE</div>
+                            {paymentConfig.upiId ? <div className="flex flex-col items-center gap-3"><img src={'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(buildUpiUri(paymentConfig.upiId, paymentOrder.totalAmount, paymentOrder.orderNumber))} alt="Dynamic UPI QR Code" className="w-64 h-64 rounded-2xl border border-border p-2 bg-white" /><p className="text-sm font-bold text-muted-foreground">Scan to pay exactly ₹{Number(paymentOrder.totalAmount).toFixed(2)}</p></div> : <p className="text-center text-danger font-bold">UPI ID is not configured yet.</p>}
+                            <button type="button" onClick={handlePaymentDone} className="btn-primary w-full h-14 text-lg font-black">I Have Paid</button>
+                            <p className="text-xs text-muted-foreground text-center">After payment, upload the screenshot or send payment details on WhatsApp.</p>
                         </div>
                     </div>
                 </div>
             )}
 
+            {/* Payment Proof Modal */}
+            {showProofModal && paymentOrder && (
+                <div className="fixed inset-0 z-[55] flex items-center justify-center p-4 bg-background/90 backdrop-blur-md">
+                    <div className="bg-card w-full max-w-lg rounded-[2rem] shadow-2xl border border-border p-7">
+                        <div className="flex items-center justify-between mb-6"><div><h2 className="text-2xl font-black">Payment Proof</h2><p className="text-sm text-muted-foreground font-bold mt-1">Order #{paymentOrder.orderNumber}</p></div><button onClick={() => setShowProofModal(false)} className="p-2 rounded-full bg-muted"><X className="w-5 h-5" /></button></div>
+                        <label className="block p-6 rounded-2xl border-2 border-dashed border-primary/40 text-center cursor-pointer hover:bg-primary/5"><input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={e => setPaymentProofFile(e.target.files?.[0] || null)} /><div className="font-black text-lg">{paymentProofFile ? paymentProofFile.name : 'Upload Payment Screenshot'}</div><div className="text-xs text-muted-foreground mt-2">JPG, PNG or WEBP • Maximum 8 MB</div></label>
+                        <button type="button" onClick={uploadPaymentProof} disabled={!paymentProofFile || proofUploading} className="btn-primary w-full h-14 mt-5 font-black disabled:opacity-50">{proofUploading ? 'Uploading...' : 'Upload Screenshot'}</button>
+                        <div className="flex items-center gap-3 my-5"><div className="h-px bg-border flex-1"></div><span className="text-xs font-black text-muted-foreground">OR</span><div className="h-px bg-border flex-1"></div></div>
+                        <button type="button" onClick={openWhatsAppPayment} className="w-full h-14 rounded-xl bg-green-600 text-white font-black hover:bg-green-700 transition-colors">Send Payment Details via WhatsApp</button>
+                    </div>
+                </div>
+            )}
             {/* Developer-Friendly Error Modal */}
             {showErrorModal && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-background/90 backdrop-blur-xl">
