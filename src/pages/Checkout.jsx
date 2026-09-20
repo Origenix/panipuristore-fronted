@@ -475,7 +475,7 @@ const Checkout = () => {
 
                     {/* Order Summary Sidebar */}
                     <div className="w-full xl:w-[450px]">
-                        <div className="card-premium p-8 sticky top-[100px] bg-secondary text-white border-none shadow-2xl relative overflow-hidden">
+                        <div className="card-premium p-8 sticky top-[100px] bg-secondary dark:bg-[#171717] text-white border-none shadow-2xl relative overflow-hidden">
                             <Flame className="absolute -right-10 -bottom-10 w-64 h-64 text-white/5" />
                             
                             <h3 className="text-3xl font-black mb-8 tracking-tighter relative z-10">Your Feast</h3>
