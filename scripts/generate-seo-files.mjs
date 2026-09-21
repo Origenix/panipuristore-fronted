@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const configured = (process.env.VITE_SITE_URL || '').trim().replace(/\/$/, '');
+const configured = (process.env.VITE_SITE_URL || 'https://panipuristore.vercel.app').trim().replace(/\/$/, '');
 const outDir = path.resolve('public');
 
 if (!configured) {
