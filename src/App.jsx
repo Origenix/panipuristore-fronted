@@ -22,6 +22,7 @@ import OwnerDashboard from './pages/OwnerDashboard';
 import DeliveryDashboard from './pages/DeliveryDashboard';
 import MyAddresses from './pages/MyAddresses';
 import SubscriptionPlans from './pages/SubscriptionPlans';
+import SupportCenter from './pages/SupportCenter';
 
 const ProtectedRoute = ({ children, allowedRoles, roles }) => {
     const { user, loading } = useContext(AuthContext);
@@ -65,6 +66,7 @@ function App() {
                         <Route path="/orders" element={<ProtectedRoute roles={['CUSTOMER']}><Orders /></ProtectedRoute>} />
                         <Route path="/favorites" element={<ProtectedRoute allowedRoles={['ROLE_CUSTOMER']}><Favorites /></ProtectedRoute>} />
                         <Route path="/profile/addresses" element={<ProtectedRoute roles={['CUSTOMER']}><MyAddresses /></ProtectedRoute>} />
+                        <Route path="/support" element={<ProtectedRoute allowedRoles={['ROLE_CUSTOMER','ROLE_RESTAURANT_OWNER']}><SupportCenter /></ProtectedRoute>} />
 
                         <Route path="/admin/*" element={<ProtectedRoute allowedRoles={['ROLE_ADMIN']}><AdminDashboard /></ProtectedRoute>} />
                         <Route path="/owner" element={<ProtectedRoute roles={['RESTAURANT_OWNER']}><OwnerDashboard /></ProtectedRoute>} />
