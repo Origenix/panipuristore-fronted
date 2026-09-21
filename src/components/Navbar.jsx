@@ -13,7 +13,8 @@ import {
   Sun,
   Heart,
   Store,
-  MapPin
+  MapPin,
+  Headphones
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -107,6 +108,12 @@ const Navbar = () => {
                             <Link to="/restaurants" className="font-bold text-foreground/80 hover:text-primary transition-colors">Restaurants</Link>
                             {!user && <Link to="/subscription-plans" className="font-bold text-foreground/80 hover:text-primary transition-colors whitespace-nowrap">Subscription</Link>}
                         </>
+                    )}
+
+                    {user && (user.role === 'ROLE_CUSTOMER' || user.role === 'ROLE_RESTAURANT_OWNER') && (
+                        <Link to="/support" className="font-bold text-foreground/80 hover:text-primary transition-colors flex items-center gap-2">
+                            <Headphones className="w-4 h-4" /> Support
+                        </Link>
                     )}
                     
                     <div className="w-px h-6 bg-border mx-2"></div>
@@ -210,6 +217,11 @@ const Navbar = () => {
                                 {user.role !== 'ROLE_CUSTOMER' && (
                                     <Link onClick={() => setIsMobileMenuOpen(false)} to={user.role === 'ROLE_ADMIN' ? '/admin' : user.role === 'ROLE_RESTAURANT_OWNER' ? '/owner' : '/delivery'} className="block px-4 py-3 text-lg font-bold rounded-2xl hover:bg-muted transition-colors">
                                         My Dashboard
+                                    </Link>
+                                )}
+                                {(user.role === 'ROLE_CUSTOMER' || user.role === 'ROLE_RESTAURANT_OWNER') && (
+                                    <Link onClick={() => setIsMobileMenuOpen(false)} to="/support" className="flex items-center gap-3 px-4 py-3 text-lg font-bold rounded-2xl hover:bg-muted transition-colors">
+                                        <Headphones className="w-5 h-5 text-primary" /> Customer Support
                                     </Link>
                                 )}
                                 {user.role === 'ROLE_CUSTOMER' && (
