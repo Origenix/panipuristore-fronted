@@ -123,6 +123,14 @@ const OwnerDashboard = () => {
         };
     }, []);
 
+    useEffect(() => {
+        if (restaurants.length === 0) return;
+        const intervalId = setInterval(() => {
+            fetchOrdersForRestaurant(restaurants[0].id);
+        }, 5000);
+        return () => clearInterval(intervalId);
+    }, [restaurants]);
+
     const fetchCoupons = async () => {
         try {
             const res = await axios.get('/coupons/owner/my');
