@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useContext } from 'react';
 import axios from '../api/axios';
 import toast from 'react-hot-toast';
-import { Users, Store, Receipt, IndianRupee, LayoutDashboard, UtensilsCrossed, PackageSearch, Activity, TrendingUp, ShieldCheck, ChevronRight, Edit2, Trash2, Plus, X } from 'lucide-react';
+import { Users, Store, Receipt, IndianRupee, LayoutDashboard, UtensilsCrossed, PackageSearch, Activity, TrendingUp, ShieldCheck, ChevronRight, Edit2, Trash2, Plus, X, Headphones } from 'lucide-react';
 import { NotificationContext } from '../context/NotificationContext';
+import AdminSupportPanel from '../components/AdminSupportPanel';
 
 const AdminDashboard = () => {
     const { latestNotification } = useContext(NotificationContext);
@@ -388,7 +389,8 @@ const AdminDashboard = () => {
                             { id: 'categories', label: 'Categories', icon: LayoutDashboard },
                             { id: 'products', label: 'Products', icon: UtensilsCrossed },
                             { id: 'restaurants', label: 'Business', icon: Store },
-                            { id: 'users', label: 'Users', icon: Users }
+                            { id: 'users', label: 'Users', icon: Users },
+                            { id: 'support', label: 'Support', icon: Headphones }
                         ].map(tab => (
                             <button 
                                 key={tab.id}
@@ -404,6 +406,16 @@ const AdminDashboard = () => {
                 </div>
 
                 {/* Content */}
+                {activeTab === 'support' && (
+                    <div>
+                        <div className="mb-6">
+                            <h2 className="text-3xl font-black">Customer Support Center</h2>
+                            <p className="text-muted-foreground font-medium">View AI analyses, customer conversations, escalations and reply from the admin team.</p>
+                        </div>
+                        <AdminSupportPanel />
+                    </div>
+                )}
+
                 {activeTab === 'analytics' && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                         {[
