@@ -141,6 +141,27 @@ const Checkout = () => {
             return;
         }
 
+        // Always refresh the server-side cart immediately before checkout.
+        // The checkout page can otherwise hold stale cart data if the cart was
+        // changed/cleared in another tab or after a previous payment flow.
+        let latestCart;
+        try {
+            const cartResponse = await axios.get('/cart');
+            latestCart = cartResponse.data;
+            if (!latestCart?.items?.length) {
+                await fetchCart();
+                setErrorDetails({
+                    message: "Your cart is empty or has changed. Please return to the cart and add your items again.",
+                    devInfo: "The server-side cart was empty when checkout was submitted, so no order was created."
+                });
+                setShowErrorModal(true);
+                return;
+            }
+        } catch (cartError) {
+            handleRuntimeError(cartError);
+            return;
+        }
+
         if (restaurantManualClosed) {
             setErrorDetails({
                 message: "This restaurant is currently closed and is not accepting orders right now. Please try again later.",
