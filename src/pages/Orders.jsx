@@ -86,13 +86,18 @@ const Orders = () => {
         const paymentLabel = order.paymentMethod === 'UPI'
             ? (order.paymentStatus === 'VERIFIED' ? 'UPI - Payment Verified' : 'UPI - Payment Done / Verification Processing')
             : 'Cash on Delivery';
+        const orderedAt = order.createdAt
+            ? new Date(order.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+            : '—';
+        const ownerPhone = order.restaurantOwnerPhone || 'Not available';
+
         const billWindow = window.open('', '_blank', 'width=800,height=900');
         if (!billWindow) {
             toast.error('Please allow pop-ups to print the bill.');
             return;
         }
         billWindow.document.write(`<!doctype html><html><head><title>Bill - ${order.orderNumber}</title>
-        <style>body{font-family:Arial,sans-serif;margin:0;padding:32px;color:#222;background:#fff}.bill{max-width:700px;margin:auto;border:1px solid #ddd;border-radius:16px;padding:28px}h1{margin:0 0 4px;font-size:28px}.muted{color:#666;font-size:13px}.row{display:flex;justify-content:space-between;gap:20px;margin:8px 0}table{width:100%;border-collapse:collapse;margin-top:24px}th,td{padding:10px 6px;border-bottom:1px solid #eee;text-align:left}th{font-size:12px;text-transform:uppercase;color:#666}.total{font-size:20px;font-weight:800;border-top:2px solid #222;padding-top:12px;margin-top:16px}.payment{margin-top:18px;padding:12px;border-radius:10px;background:#f5f5f5;font-weight:700}@media print{body{padding:0}.bill{border:0}}</style></head><body><div class="bill"><h1>PANIPURI STORE</h1><div class="muted">Customer Bill / Payment Receipt</div><hr><div class="row"><b>Order</b><span>#${order.orderNumber}</span></div><div class="row"><b>Date</b><span>${new Date(order.createdAt).toLocaleString()}</span></div><div class="row"><b>Restaurant</b><span>${order.restaurantName || ''}</span></div><div class="row"><b>Customer</b><span>${order.customerName || ''}</span></div><div class="row"><b>Delivery Address</b><span>${order.deliveryAddress || ''}</span></div><table><thead><tr><th>Item</th><th style="text-align:center">Qty</th><th style="text-align:right">Amount</th></tr></thead><tbody>${itemRows}</tbody></table><div class="row"><span>Subtotal</span><b>₹${Number(order.subtotal || 0).toFixed(2)}</b></div><div class="row"><span>Delivery</span><b>₹${Number(order.deliveryCharge || 0).toFixed(2)}</b></div>${order.discountAmount ? `<div class="row"><span>Discount</span><b>-₹${Number(order.discountAmount).toFixed(2)}</b></div>` : ''}<div class="row total"><span>Total</span><span>₹${Number(order.totalAmount || 0).toFixed(2)}</span></div><div class="payment">Payment Mode: ${paymentLabel}</div><p class="muted" style="margin-top:24px">This is a system-generated bill from Panipuri Store.</p></div></body></html>`);
+        <style>body{font-family:Arial,sans-serif;margin:0;padding:32px;color:#222;background:#fff}.bill{max-width:700px;margin:auto;border:1px solid #ddd;border-radius:16px;padding:28px}h1{margin:0 0 4px;font-size:28px}.muted{color:#666;font-size:13px}.row{display:flex;justify-content:space-between;gap:20px;margin:8px 0}table{width:100%;border-collapse:collapse;margin-top:24px}th,td{padding:10px 6px;border-bottom:1px solid #eee;text-align:left}th{font-size:12px;text-transform:uppercase;color:#666}.total{font-size:20px;font-weight:800;border-top:2px solid #222;padding-top:12px;margin-top:16px}.payment{margin-top:18px;padding:12px;border-radius:10px;background:#f5f5f5;font-weight:700}@media print{body{padding:0}.bill{border:0}}</style></head><body><div class="bill"><h1>PANIPURI STORE</h1><div class="muted">Customer Bill / Payment Receipt</div><hr><div class="row"><b>Order</b><span>#${order.orderNumber}</span></div><div class="row"><b>Ordered At</b><span>${orderedAt}</span></div><div class="row"><b>Restaurant</b><span>${order.restaurantName || ''}</span></div><div class="row"><b>Owner Mobile</b><span>${ownerPhone}</span></div><div class="row"><b>Customer</b><span>${order.customerName || ''}</span></div><div class="row"><b>Delivery Address</b><span>${order.deliveryAddress || ''}</span></div><table><thead><tr><th>Item</th><th style="text-align:center">Qty</th><th style="text-align:right">Amount</th></tr></thead><tbody>${itemRows}</tbody></table><div class="row"><span>Subtotal</span><b>₹${Number(order.subtotal || 0).toFixed(2)}</b></div><div class="row"><span>Delivery</span><b>₹${Number(order.deliveryCharge || 0).toFixed(2)}</b></div>${order.discountAmount ? `<div class="row"><span>Discount</span><b>-₹${Number(order.discountAmount).toFixed(2)}</b></div>` : ''}<div class="row total"><span>Total</span><span>₹${Number(order.totalAmount || 0).toFixed(2)}</span></div><div class="payment">Payment Mode: ${paymentLabel}</div><p class="muted" style="margin-top:24px">This is a system-generated bill from Panipuri Store.</p></div></body></html>`);
         billWindow.document.close();
         billWindow.focus();
         setTimeout(() => billWindow.print(), 250);
@@ -169,11 +174,11 @@ const Orders = () => {
                                                 : 'CASH ON DELIVERY'}
                                         </span>                                    </div>
                                     <div className="flex flex-wrap items-center gap-6 text-sm font-bold text-muted-foreground">
-                                        <span className="flex items-center gap-2"><Clock className="w-4 h-4 text-primary" /> {new Date(order.createdAt).toLocaleDateString()}</span>
+                                        <span className="flex items-center gap-2"><Clock className="w-4 h-4 text-primary" /> Ordered: {new Date(order.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                                         <span className="flex items-center gap-2"><MapPin className="w-4 h-4 text-primary" /> {order.restaurantName}</span>
-                                        {order.restaurantOwnerPhone && !['PENDING_CONFIRMATION', 'REJECTED_BY_OWNER', 'CANCELLED'].includes(order.orderStatus) && (
+                                        {order.restaurantOwnerPhone && (
                                             <a href={`tel:${order.restaurantOwnerPhone}`} className="flex items-center gap-2 text-primary bg-primary/10 px-3 py-1 rounded-full">
-                                                <span>Owner: {order.restaurantOwnerPhone}</span>
+                                                <span>Owner Mobile: {order.restaurantOwnerPhone}</span>
                                             </a>
                                         )}
                                         {order.estimatedDeliveryTime && !['DELIVERED', 'CANCELLED', 'REJECTED_BY_OWNER'].includes(order.orderStatus) && (
