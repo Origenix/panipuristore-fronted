@@ -614,6 +614,17 @@ const OwnerDashboard = () => {
                                                 </div>
                                             </div>
                                             <div className="space-y-4 mb-8">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <span className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest ${order.paymentMethod === 'UPI' ? 'bg-primary/10 text-primary' : 'bg-blue-500/10 text-blue-600'}`}>
+                                                    Payment Mode: {order.paymentMethod === 'UPI' ? 'UPI' : 'CASH ON DELIVERY'}
+                                                </span>
+                                                {order.paymentMethod === 'UPI' && (
+                                                    <span className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-orange-500/10 text-orange-600">
+                                                        {order.paymentStatus === 'VERIFIED' ? 'VERIFIED' : order.paymentStatus === 'PROOF_UPLOADED' ? 'VERIFICATION PROCESSING' : order.paymentStatus || 'PENDING'}
+                                                    </span>
+                                                )}
+                                            </div>
+
                                                 <div className="font-bold text-sm opacity-70">
                                                     Customer: {order.customerName} <br/>
                                                     Phone: {order.customerPhone || 'N/A'}
