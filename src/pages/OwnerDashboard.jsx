@@ -5,6 +5,8 @@ import { AuthContext } from '../context/AuthContext';
 import { NotificationContext } from '../context/NotificationContext';
 import toast from 'react-hot-toast';
 
+const PAYMENT_STATUSES = ['PENDING', 'PROOF_UPLOADED', 'VERIFIED', 'REJECTED'];
+
 const OwnerDashboard = () => {
     const { user } = useContext(AuthContext);
     const { latestNotification } = useContext(NotificationContext);
@@ -19,6 +21,9 @@ const OwnerDashboard = () => {
     const [showAddForm, setShowAddForm] = useState(false);
     const [previousPendingCount, setPreviousPendingCount] = useState(0);
     const [imageFile, setImageFile] = useState(null);
+    const [paymentProofUrl, setPaymentProofUrl] = useState(null);
+    const [paymentProofOrder, setPaymentProofOrder] = useState(null);
+    const [paymentStatusSaving, setPaymentStatusSaving] = useState(null);
 
     // New State for Product & Category Management
     const [showCategoryForm, setShowCategoryForm] = useState(false);
@@ -288,6 +293,30 @@ const OwnerDashboard = () => {
             } else {
                 toast.error("Failed to toggle trending status");
             }
+        }
+    };
+
+    const viewPaymentProof = async (order) => {
+        try {
+            const res = await axios.get(`/orders/${order.id}/owner/payment-screenshot`, { responseType: 'blob' });
+            const url = URL.createObjectURL(res.data);
+            setPaymentProofUrl(url);
+            setPaymentProofOrder(order);
+        } catch (error) {
+            toast.error(error.response?.data?.message || error.response?.data?.error || 'Unable to load payment screenshot');
+        }
+    };
+
+    const updatePaymentStatus = async (orderId, status) => {
+        setPaymentStatusSaving(orderId);
+        try {
+            const res = await axios.put(`/orders/${orderId}/owner/payment-status?status=${encodeURIComponent(status)}`);
+            setOrders(prev => prev.map(o => o.id === orderId ? res.data : o));
+            toast.success(status === 'VERIFIED' ? 'Payment verified. Customer has been notified by email.' : `Payment status changed to ${status.replace(/_/g, ' ')}.`);
+        } catch (error) {
+            toast.error(error.response?.data?.message || error.response?.data?.error || 'Failed to update payment status');
+        } finally {
+            setPaymentStatusSaving(null);
         }
     };
 
@@ -595,6 +624,35 @@ const OwnerDashboard = () => {
                                                     </a>
                                                 )}
                                             </div>
+                                            {order.paymentMethod === 'UPI' && (
+                                                <div className="mb-6 p-4 rounded-2xl border border-primary/15 bg-primary/5 space-y-3">
+                                                    <div className="flex flex-wrap items-center justify-between gap-3">
+                                                        <div>
+                                                            <p className="text-[10px] font-black uppercase tracking-widest text-primary">Online Payment</p>
+                                                            <p className="text-sm font-black mt-1">Mode: UPI</p>
+                                                        </div>
+                                                        <span className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest ${
+                                                            order.paymentStatus === 'VERIFIED' ? 'bg-green-100 text-green-700' :
+                                                            order.paymentStatus === 'REJECTED' ? 'bg-red-100 text-red-700' :
+                                                            order.paymentStatus === 'PROOF_UPLOADED' ? 'bg-blue-100 text-blue-700' :
+                                                            'bg-orange-100 text-orange-700'
+                                                        }`}>
+                                                            {order.paymentStatus === 'PROOF_UPLOADED' ? 'Verification Processing' : order.paymentStatus || 'PENDING'}
+                                                        </span>
+                                                    </div>
+                                                    {order.paymentScreenshotUploaded && (
+                                                        <div className="flex flex-wrap gap-2">
+                                                            <button type="button" onClick={() => viewPaymentProof(order)} className="px-4 py-2 bg-primary text-white rounded-xl text-[10px] font-black uppercase tracking-widest">View Payment Screenshot</button>
+                                                            <select value={order.paymentStatus || 'PENDING'} disabled={paymentStatusSaving === order.id} onChange={(e) => updatePaymentStatus(order.id, e.target.value)} className="bg-background border border-border rounded-xl px-3 py-2 text-[10px] font-black uppercase tracking-widest">
+                                                                {PAYMENT_STATUSES.map(status => <option key={status} value={status}>{status.replace(/_/g, ' ')}</option>)}
+                                                            </select>
+                                                        </div>
+                                                    )}
+                                                    {order.paymentStatus === 'PROOF_UPLOADED' && <p className="text-xs font-bold text-blue-600">Customer payment proof received. Please verify the screenshot before treating the payment as verified.</p>}
+                                                    {order.paymentStatus === 'VERIFIED' && <p className="text-xs font-bold text-green-600">Payment verified. Customer has been notified by email.</p>}
+                                                </div>
+                                            )}
+
                                             <div className="flex justify-between items-center pt-6 border-t border-border">
                                                 <p className="text-3xl font-black">₹{order.totalAmount}</p>
                                                 <div className="flex gap-2">
@@ -1361,6 +1419,16 @@ const OwnerDashboard = () => {
                     </div>
                 </div>
             )}
+        {paymentProofUrl && (
+            <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4" onClick={() => { URL.revokeObjectURL(paymentProofUrl); setPaymentProofUrl(null); setPaymentProofOrder(null); }}>
+                <div className="relative max-w-5xl max-h-[92vh] w-full">
+                    <button type="button" onClick={() => { URL.revokeObjectURL(paymentProofUrl); setPaymentProofUrl(null); setPaymentProofOrder(null); }} className="absolute -top-12 right-0 p-2 rounded-full bg-white text-black"><X className="w-6 h-6" /></button>
+                    <div className="text-white mb-3 font-bold">Payment proof — #{paymentProofOrder?.orderNumber}</div>
+                    <img src={paymentProofUrl} alt="Payment proof" className="max-w-full max-h-[84vh] mx-auto object-contain rounded-xl bg-white" onClick={(e) => e.stopPropagation()} />
+                </div>
+            </div>
+        )}
+
         </div>
     );
 };
