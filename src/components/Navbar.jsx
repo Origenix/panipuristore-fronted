@@ -115,6 +115,7 @@ const Navbar = () => {
                         onClick={toggleDarkMode}
                         className="p-2.5 rounded-full bg-muted hover:bg-border text-foreground transition-all"
                         aria-label="Toggle Dark Mode"
+                        data-no-global-click-lock="true"
                     >
                         {darkMode ? <Sun className="w-5 h-5 text-accent" /> : <Moon className="w-5 h-5 text-secondary" />}
                     </button>
@@ -197,7 +198,7 @@ const Navbar = () => {
                         
                         <div className="px-4 py-2 flex items-center justify-between">
                             <span className="font-bold">Dark Mode</span>
-                            <button onClick={toggleDarkMode} className="p-2 rounded-full bg-muted">
+                            <button onClick={toggleDarkMode} className="p-2 rounded-full bg-muted" data-no-global-click-lock="true">
                                 {darkMode ? <Sun className="w-5 h-5 text-accent" /> : <Moon className="w-5 h-5 text-secondary" />}
                             </button>
                         </div>
