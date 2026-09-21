@@ -99,6 +99,12 @@ export default function SEO() {
     );
 
     document.title = title;
+
+    // Remove route-specific structured data from the previous SPA view.
+    ['website', 'organization', 'breadcrumb'].forEach((id) => {
+      document.head.querySelector(`script[data-seo-id="${id}"]`)?.remove();
+    });
+
     upsertMeta('name', 'description', description);
     upsertMeta('name', 'robots', isPrivate ? 'noindex,nofollow' : 'index,follow');
     upsertMeta('property', 'og:title', title);
