@@ -13,7 +13,7 @@ const Checkout = () => {
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
-        paymentMethod: 'COD'
+        paymentMethod: 'UPI'
     });
     
     const [addresses, setAddresses] = useState([]);
