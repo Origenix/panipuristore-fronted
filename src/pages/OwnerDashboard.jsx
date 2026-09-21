@@ -691,6 +691,33 @@ const OwnerDashboard = () => {
                                             </div>
                                         </div>
                                         <div className="space-y-4 mb-8">
+                                        {order.paymentMethod === 'UPI' && (
+                                            <div className="p-4 rounded-2xl border border-primary/15 bg-primary/5 space-y-3">
+                                                <div className="flex flex-wrap items-center justify-between gap-3">
+                                                    <div>
+                                                        <p className="text-[10px] font-black uppercase tracking-widest text-primary">Online Payment</p>
+                                                        <p className="text-sm font-black mt-1">Mode: UPI</p>
+                                                    </div>
+                                                    <span className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest ${
+                                                        order.paymentStatus === 'VERIFIED' ? 'bg-green-100 text-green-700' :
+                                                        order.paymentStatus === 'REJECTED' ? 'bg-red-100 text-red-700' :
+                                                        order.paymentStatus === 'PROOF_UPLOADED' ? 'bg-blue-100 text-blue-700' :
+                                                        'bg-orange-100 text-orange-700'
+                                                    }`}>
+                                                        {order.paymentStatus === 'PROOF_UPLOADED' ? 'Verification Processing' : order.paymentStatus || 'PENDING'}
+                                                    </span>
+                                                </div>
+                                                {order.paymentScreenshotUploaded && (
+                                                    <div className="flex flex-wrap gap-2">
+                                                        <button type="button" onClick={() => viewPaymentProof(order)} className="px-4 py-2 bg-primary text-white rounded-xl text-[10px] font-black uppercase tracking-widest">View Payment Screenshot</button>
+                                                        <select value={order.paymentStatus || 'PENDING'} disabled={paymentStatusSaving === order.id} onChange={(e) => updatePaymentStatus(order.id, e.target.value)} className="bg-background border border-border rounded-xl px-3 py-2 text-[10px] font-black uppercase tracking-widest">
+                                                            {PAYMENT_STATUSES.map(status => <option key={status} value={status}>{status.replace(/_/g, ' ')}</option>)}
+                                                        </select>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
                                             <div className="font-bold text-sm opacity-70">
                                                 Customer: {order.customerName} <br/>
                                                 Phone: {order.customerPhone || 'N/A'}
