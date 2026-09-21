@@ -1,0 +1,7 @@
+# Panipuri Store - crawler guidance
+User-agent: *
+Allow: /
+
+# Private/account pages are marked noindex by the application.
+# Keep them crawlable so search engines can see the noindex directive.
+
