@@ -1,9 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import axios from '../api/axios';
 import toast from 'react-hot-toast';
-import { Bot, Send, Headphones, PackageSearch, CreditCard, Ban, Store, AlertTriangle, UserRound, RefreshCw, CheckCircle2, ExternalLink } from 'lucide-react';
+import { Bot, Send, Headphones, PackageSearch, CreditCard, Ban, Store, AlertTriangle, UserRound, RefreshCw, CheckCircle2, ExternalLink, Utensils, ShoppingCart, HelpCircle } from 'lucide-react';
 
 const QUICK = [
+  { label: 'How to reorder', icon: Utensils, text: 'reorder kaise kare' },
+  { label: 'How to use the website', icon: HelpCircle, text: 'website ko kaise use kare? saare main features samjhao' },
+  { label: 'How to use Cart', icon: ShoppingCart, text: 'cart kaise use kare aur checkout kaise kare?' },
   { label: 'Track my live order', icon: PackageSearch, text: 'I want to track my live order.' },
   { label: 'Payment problem', icon: CreditCard, text: 'I have a payment problem. Please check my latest order/payment status.' },
   { label: 'Cancel an order', icon: Ban, text: 'I want to cancel an order. Please check which of my orders can be cancelled.' },
