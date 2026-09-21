@@ -110,7 +110,7 @@ function App() {
                                     <li><a href="/menu" className="hover:text-primary transition-colors">Our Menu</a></li>
                                     <li><a href="/restaurants" className="hover:text-primary transition-colors">Restaurants</a></li>
                                     <li><a href="/subscription-plans" className="hover:text-primary transition-colors">Subscription Plans</a></li>
-                                    <li><a href="/support" className="hover:text-primary transition-colors">Customer Support</a></li>
+                                    <li><a href="/subscription-plans" className="hover:text-primary transition-colors">Subscription Plans</a></li>
                                 </ul>
                             </div>
                             
@@ -118,9 +118,8 @@ function App() {
                                 <h4 className="text-lg font-bold mb-6 border-b border-white/10 pb-2 inline-block">Support</h4>
                                 <ul className="space-y-4 text-gray-400 text-sm">
                                     <li><a href="/restaurants" className="hover:text-primary transition-colors">Find Restaurants</a></li>
-                                    <li><a href="/menu" className="hover:text-primary transition-colors">Track Menu & Items</a></li>
+                                    <li><a href="/menu" className="hover:text-primary transition-colors">Browse Menu</a></li>
                                     <li><a href="/subscription-plans" className="hover:text-primary transition-colors">Subscription Plans</a></li>
-                                    <li><a href="/support" className="hover:text-primary transition-colors">Customer Support</a></li>
                                 </ul>
                             </div>
                             
