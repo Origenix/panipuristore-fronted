@@ -24,7 +24,7 @@ export default function AdminSupportPanel() {
       next.forEach(x => { if (x.status === 'WAITING_HUMAN') knownEscalations.current.add(x.id); });
       firstLoad.current = false;
       setItems(next);
-      if (selected) setSelected(next.find(x => x.id === selected.id) || selected);
+      setSelected(prev => prev ? (next.find(x => x.id === prev.id) || prev) : prev);
     } catch { toast.error('Failed to load support conversations.'); }
     finally { setLoading(false); }
   };
