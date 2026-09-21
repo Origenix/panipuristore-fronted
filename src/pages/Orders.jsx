@@ -79,6 +79,25 @@ const Orders = () => {
         }
     };
 
+    const handlePrintBill = (order) => {
+        const itemRows = (order.items || []).map(item =>
+            `<tr><td>${item.menuItemName}</td><td style="text-align:center">${item.quantity}</td><td style="text-align:right">₹${Number(item.price * item.quantity).toFixed(2)}</td></tr>`
+        ).join('');
+        const paymentLabel = order.paymentMethod === 'UPI'
+            ? (order.paymentStatus === 'VERIFIED' ? 'UPI - Payment Verified' : 'UPI - Payment Done / Verification Processing')
+            : 'Cash on Delivery';
+        const billWindow = window.open('', '_blank', 'width=800,height=900');
+        if (!billWindow) {
+            toast.error('Please allow pop-ups to print the bill.');
+            return;
+        }
+        billWindow.document.write(`<!doctype html><html><head><title>Bill - ${order.orderNumber}</title>
+        <style>body{font-family:Arial,sans-serif;margin:0;padding:32px;color:#222;background:#fff}.bill{max-width:700px;margin:auto;border:1px solid #ddd;border-radius:16px;padding:28px}h1{margin:0 0 4px;font-size:28px}.muted{color:#666;font-size:13px}.row{display:flex;justify-content:space-between;gap:20px;margin:8px 0}table{width:100%;border-collapse:collapse;margin-top:24px}th,td{padding:10px 6px;border-bottom:1px solid #eee;text-align:left}th{font-size:12px;text-transform:uppercase;color:#666}.total{font-size:20px;font-weight:800;border-top:2px solid #222;padding-top:12px;margin-top:16px}.payment{margin-top:18px;padding:12px;border-radius:10px;background:#f5f5f5;font-weight:700}@media print{body{padding:0}.bill{border:0}}</style></head><body><div class="bill"><h1>PANIPURI STORE</h1><div class="muted">Customer Bill / Payment Receipt</div><hr><div class="row"><b>Order</b><span>#${order.orderNumber}</span></div><div class="row"><b>Date</b><span>${new Date(order.createdAt).toLocaleString()}</span></div><div class="row"><b>Restaurant</b><span>${order.restaurantName || ''}</span></div><div class="row"><b>Customer</b><span>${order.customerName || ''}</span></div><div class="row"><b>Delivery Address</b><span>${order.deliveryAddress || ''}</span></div><table><thead><tr><th>Item</th><th style="text-align:center">Qty</th><th style="text-align:right">Amount</th></tr></thead><tbody>${itemRows}</tbody></table><div class="row"><span>Subtotal</span><b>₹${Number(order.subtotal || 0).toFixed(2)}</b></div><div class="row"><span>Delivery</span><b>₹${Number(order.deliveryCharge || 0).toFixed(2)}</b></div>${order.discountAmount ? `<div class="row"><span>Discount</span><b>-₹${Number(order.discountAmount).toFixed(2)}</b></div>` : ''}<div class="row total"><span>Total</span><span>₹${Number(order.totalAmount || 0).toFixed(2)}</span></div><div class="payment">Payment Mode: ${paymentLabel}</div><p class="muted" style="margin-top:24px">This is a system-generated bill from Panipuri Store.</p></div></body></html>`);
+        billWindow.document.close();
+        billWindow.focus();
+        setTimeout(() => billWindow.print(), 250);
+    };
+
     const handleRate = async (orderId, rating, feedback = "") => {
         try {
             await axios.put(`/orders/${orderId}/rate?rating=${rating}&feedback=${encodeURIComponent(feedback)}`);
@@ -138,7 +157,7 @@ const Orders = () => {
                                         </span>
                                         {order.paymentMethod === 'UPI' && (
                                             <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black tracking-widest uppercase ${order.paymentStatus === 'VERIFIED' ? 'text-success bg-success/10' : order.paymentStatus === 'REJECTED' ? 'text-danger bg-danger/10' : 'text-orange-500 bg-orange-500/10'}`}>
-                                                Payment: {order.paymentStatus === 'VERIFIED' ? 'VERIFIED' : order.paymentStatus === 'PROOF_UPLOADED' ? 'PROOF UPLOADED' : order.paymentStatus || 'PENDING'}
+                                                Payment: {order.paymentStatus === 'VERIFIED' ? 'Payment Done • VERIFIED' : order.paymentStatus === 'PROOF_UPLOADED' ? 'Payment Done • Verification Processing' : order.paymentStatus || 'PENDING'}
                                             </span>
                                         )}
                                     </div>
@@ -243,8 +262,8 @@ const Orders = () => {
                                         <Utensils className="w-4 h-4" /> Reorder Items
                                     </button>
                                 </div>
-                                <button className="px-6 py-2.5 rounded-full bg-muted font-black text-xs uppercase tracking-widest hover:bg-border transition-colors text-foreground">
-                                    Download Bill
+                                <button onClick={() => handlePrintBill(order)} className="px-6 py-2.5 rounded-full bg-muted font-black text-xs uppercase tracking-widest hover:bg-border transition-colors text-foreground flex items-center gap-2">
+                                    <Receipt className="w-4 h-4" /> Print Bill
                                 </button>
                             </div>
                             
