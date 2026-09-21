@@ -6,6 +6,7 @@ import { AuthContext } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { Store, Instagram, Twitter, Facebook } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
+import SEO from './components/SEO';
 
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -49,6 +50,7 @@ function App() {
         <Router>
             <div className="flex flex-col min-h-screen">
                 <Toaster />
+                <SEO />
                 <Navbar />
                 <BottomNav />
                 <main className="flex-grow pb-16 md:pb-0">
@@ -106,19 +108,18 @@ function App() {
                                 <h4 className="text-lg font-bold mb-6 border-b border-white/10 pb-2 inline-block">Explore</h4>
                                 <ul className="space-y-4 text-gray-400 text-sm">
                                     <li><a href="/menu" className="hover:text-primary transition-colors">Our Menu</a></li>
-                                    <li><a href="#" className="hover:text-primary transition-colors">Combo Offers</a></li>
-                                    <li><a href="#" className="hover:text-primary transition-colors">Catering</a></li>
-                                    <li><a href="#" className="hover:text-primary transition-colors">Nutrition Info</a></li>
+                                    <li><a href="/restaurants" className="hover:text-primary transition-colors">Restaurants</a></li>
+                                    <li><a href="/subscription-plans" className="hover:text-primary transition-colors">Subscription Plans</a></li>
+                                    <li><a href="/subscription-plans" className="hover:text-primary transition-colors">Subscription Plans</a></li>
                                 </ul>
                             </div>
                             
                             <div>
                                 <h4 className="text-lg font-bold mb-6 border-b border-white/10 pb-2 inline-block">Support</h4>
                                 <ul className="space-y-4 text-gray-400 text-sm">
-                                    <li><a href="#" className="hover:text-primary transition-colors">Contact Us</a></li>
-                                    <li><a href="#" className="hover:text-primary transition-colors">Track Order</a></li>
-                                    <li><a href="#" className="hover:text-primary transition-colors">Refund Policy</a></li>
-                                    <li><a href="#" className="hover:text-primary transition-colors">FAQ</a></li>
+                                    <li><a href="/restaurants" className="hover:text-primary transition-colors">Find Restaurants</a></li>
+                                    <li><a href="/menu" className="hover:text-primary transition-colors">Browse Menu</a></li>
+                                    <li><a href="/subscription-plans" className="hover:text-primary transition-colors">Subscription Plans</a></li>
                                 </ul>
                             </div>
                             
