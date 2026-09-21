@@ -155,16 +155,19 @@ const Orders = () => {
                                         <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black tracking-widest uppercase shadow-sm ${getStatusColor(order.orderStatus)}`}>
                                             {order.orderStatus.replace(/_/g, ' ')}
                                         </span>
-                                        <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black tracking-widest uppercase ${
+                                        <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black tracking-widest uppercase shadow-sm ${
                                             order.paymentMethod === 'UPI'
-                                                ? (order.paymentStatus === 'VERIFIED' ? 'text-success bg-success/10' : order.paymentStatus === 'REJECTED' ? 'text-danger bg-danger/10' : 'text-orange-500 bg-orange-500/10')
-                                                : 'text-blue-600 bg-blue-500/10'
+                                                ? order.paymentStatus === 'VERIFIED'
+                                                    ? 'text-green-700 bg-green-500/15 border border-green-500/30'
+                                                    : order.paymentStatus === 'REJECTED'
+                                                        ? 'text-red-700 bg-red-500/15 border border-red-500/30'
+                                                        : 'text-orange-700 bg-orange-500/15 border border-orange-500/30'
+                                                : 'text-blue-700 bg-blue-500/15 border border-blue-500/30'
                                         }`}>
                                             Payment Mode: {order.paymentMethod === 'UPI'
                                                 ? (order.paymentStatus === 'VERIFIED' ? 'UPI • Payment Done • VERIFIED' : order.paymentStatus === 'PROOF_UPLOADED' ? 'UPI • Payment Done • Verification Processing' : 'UPI • ' + (order.paymentStatus || 'PENDING'))
                                                 : 'CASH ON DELIVERY'}
-                                        </span>
-                                    </div>
+                                        </span>                                    </div>
                                     <div className="flex flex-wrap items-center gap-6 text-sm font-bold text-muted-foreground">
                                         <span className="flex items-center gap-2"><Clock className="w-4 h-4 text-primary" /> {new Date(order.createdAt).toLocaleDateString()}</span>
                                         <span className="flex items-center gap-2"><MapPin className="w-4 h-4 text-primary" /> {order.restaurantName}</span>
