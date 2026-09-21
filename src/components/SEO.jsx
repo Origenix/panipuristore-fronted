@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
 const SITE_NAME = 'Panipuri Store';
+const DEFAULT_SITE_URL = 'https://panipuristore.vercel.app';
 const DEFAULT_DESCRIPTION =
   'Panipuri Store brings pani puri, chaats and Indian street food online. Explore the menu, discover restaurants and order fresh street food.';
 
@@ -78,8 +79,8 @@ export default function SEO() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    const configuredSiteUrl = (import.meta.env.VITE_SITE_URL || '').replace(/\/$/, '');
-    const origin = configuredSiteUrl || window.location.origin;
+    const configuredSiteUrl = (import.meta.env.VITE_SITE_URL || DEFAULT_SITE_URL).replace(/\/$/, '');
+    const origin = configuredSiteUrl;
     const canonicalUrl = `${origin}${pathname === '/' ? '/' : pathname}`;
 
     const route = PUBLIC_ROUTES[pathname];
