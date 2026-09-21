@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import axios from '../api/axios';
 import toast from 'react-hot-toast';
 import { MessageSquare, RefreshCw, Send } from 'lucide-react';
@@ -8,13 +8,23 @@ export default function AdminSupportPanel() {
   const [selected, setSelected] = useState(null);
   const [reply, setReply] = useState('');
   const [loading, setLoading] = useState(true);
+  const knownEscalations = useRef(new Set());
+  const firstLoad = useRef(true);
 
   const load = async () => {
     setLoading(true);
     try {
       const res = await axios.get('/support/admin/all');
-      setItems(res.data || []);
-      if (selected) setSelected((res.data || []).find(x => x.id === selected.id) || selected);
+      const next = res.data || [];
+      if (!firstLoad.current) {
+        next.filter(x => x.status === 'WAITING_HUMAN' && !knownEscalations.current.has(x.id)).forEach(x => {
+          toast.error('New support escalation: ' + x.customerName + ' · ' + x.category, { duration: 5000 });
+        });
+      }
+      next.forEach(x => { if (x.status === 'WAITING_HUMAN') knownEscalations.current.add(x.id); });
+      firstLoad.current = false;
+      setItems(next);
+      if (selected) setSelected(next.find(x => x.id === selected.id) || selected);
     } catch { toast.error('Failed to load support conversations.'); }
     finally { setLoading(false); }
   };
