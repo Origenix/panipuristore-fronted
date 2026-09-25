@@ -12,6 +12,7 @@ const ForgotPassword = () => {
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
   const requestReset = async (e) => {
     e.preventDefault();
@@ -22,6 +23,7 @@ const ForgotPassword = () => {
       const res = await axios.post('/auth/forgot-password', { email: normalized });
       toast.success(res.data?.message || 'If an account exists, a reset code has been sent.');
       setResetToken('');
+      setResetSent(true);
     } catch (err) {
       toast.error(err.response?.data?.message || err.response?.data?.error || 'Unable to request password reset.');
     } finally { setLoading(false); }
@@ -42,14 +44,14 @@ const ForgotPassword = () => {
     } finally { setLoading(false); }
   };
 
-  const hasToken = Boolean(token);
+  const hasToken = Boolean(token) || resetSent;
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-28">
       <div className="w-full max-w-md card-premium p-7 md:p-9">
         <div className="text-center mb-7">
           <h1 className="text-3xl font-black tracking-tight">{hasToken ? 'Reset Password' : 'Forgot Password?'}</h1>
           <p className="text-sm text-muted-foreground mt-2">
-            {hasToken ? 'Choose a new password for your Panipuri Store account.' : 'Enter your registered email to receive a secure reset link and code.'}
+            {hasToken ? 'Enter the reset code from your email and choose a new password.' : 'Enter your registered email to receive a secure reset link and code.'}
           </p>
         </div>
 
@@ -63,7 +65,7 @@ const ForgotPassword = () => {
         ) : (
           <form onSubmit={requestReset} className="space-y-4">
             <input value={email} onChange={e => setEmail(e.target.value)} className="input-premium" type="email" placeholder="Email address" autoComplete="email" required />
-            <button disabled={loading} className="btn-primary w-full h-12 font-black">{loading ? 'Sending…' : 'Send Reset Link'}</button>
+            <button disabled={loading} className="btn-primary w-full h-12 font-black">{loading ? 'Sending…' : 'Send Reset Link & Code'}</button>
           </form>
         )}
 
