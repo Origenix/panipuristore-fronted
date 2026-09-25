@@ -140,7 +140,7 @@ const Login = () => {
                                 </div>
                                 <span className="group-hover:text-primary transition-colors">Remember me</span>
                             </label>
-                            <button type="button" className="text-primary hover:underline hover:text-primary/80 transition-colors">Forgot password?</button>
+                            <Link to="/forgot-password" className="text-primary hover:underline hover:text-primary/80 transition-colors">Forgot password?</Link>
                         </div>
 
                         <button
