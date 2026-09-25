@@ -23,6 +23,7 @@ import DeliveryDashboard from './pages/DeliveryDashboard';
 import MyAddresses from './pages/MyAddresses';
 import SubscriptionPlans from './pages/SubscriptionPlans';
 import SupportCenter from './pages/SupportCenter';
+import ForgotPassword from './pages/ForgotPassword';
 
 const ProtectedRoute = ({ children, allowedRoles, roles }) => {
     const { user, loading } = useContext(AuthContext);
@@ -56,6 +57,8 @@ function App() {
                         <Route path="/" element={<Home />} />
                         <Route path="/login" element={<Login />} />
                         <Route path="/signup" element={<Signup />} />
+                        <Route path="/forgot-password" element={<ForgotPassword />} />
+                        <Route path="/reset-password" element={<ForgotPassword />} />
                         <Route path="/subscription-plans" element={<SubscriptionPlans />} />
                         <Route path="/menu" element={<AllMenu />} />
                         <Route path="/restaurants" element={<RestaurantList />} />
