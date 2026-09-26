@@ -14,7 +14,8 @@ import {
   Heart,
   Store,
   MapPin,
-  Headphones
+  Headphones,
+  Download
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -109,6 +110,10 @@ const Navbar = () => {
                             {!user && <Link to="/subscription-plans" className="font-bold text-foreground/80 hover:text-primary transition-colors whitespace-nowrap">Subscription</Link>}
                         </>
                     )}
+
+                    <Link to="/download" className="font-bold text-foreground/80 hover:text-primary transition-colors flex items-center gap-2">
+                        <Download className="w-4 h-4" /> Download
+                    </Link>
 
                     {user && (user.role === 'ROLE_CUSTOMER' || user.role === 'ROLE_RESTAURANT_OWNER') && (
                         <Link to="/support" className="font-bold text-foreground/80 hover:text-primary transition-colors flex items-center gap-2">
@@ -212,6 +217,10 @@ const Navbar = () => {
 
                         <div className="h-px bg-border my-4 mx-4"></div>
 
+                        <Link onClick={() => setIsMobileMenuOpen(false)} to="/download" className="flex items-center gap-3 px-4 py-3 text-lg font-bold rounded-2xl hover:bg-muted transition-colors">
+                            <Download className="w-5 h-5 text-primary" /> Download App
+                        </Link>
+
                         {user ? (
                             <>
                                 {user.role !== 'ROLE_CUSTOMER' && (
@@ -243,6 +252,9 @@ const Navbar = () => {
                             </>
                         ) : (
                             <div className="flex flex-col gap-3 pt-2">
+                                <Link onClick={() => setIsMobileMenuOpen(false)} to="/download" className="flex items-center justify-center gap-2 px-4 py-3 text-lg font-bold rounded-2xl hover:bg-muted transition-colors">
+                                    <Download className="w-5 h-5 text-primary" /> Download App
+                                </Link>
                                 <Link onClick={() => setIsMobileMenuOpen(false)} to="/login" className="btn-secondary w-full text-center py-3.5">Log in</Link>
                                 <Link onClick={() => setIsMobileMenuOpen(false)} to="/subscription-plans" className="block px-4 py-3 text-lg font-bold rounded-2xl hover:bg-muted transition-colors">Subscription</Link>
                                 <Link onClick={() => setIsMobileMenuOpen(false)} to="/signup" className="btn-primary w-full text-center py-3.5">Sign up</Link>
