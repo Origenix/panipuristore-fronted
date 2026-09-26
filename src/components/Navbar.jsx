@@ -252,9 +252,6 @@ const Navbar = () => {
                             </>
                         ) : (
                             <div className="flex flex-col gap-3 pt-2">
-                                <Link onClick={() => setIsMobileMenuOpen(false)} to="/download" className="flex items-center justify-center gap-2 px-4 py-3 text-lg font-bold rounded-2xl hover:bg-muted transition-colors">
-                                    <Download className="w-5 h-5 text-primary" /> Download App
-                                </Link>
                                 <Link onClick={() => setIsMobileMenuOpen(false)} to="/login" className="btn-secondary w-full text-center py-3.5">Log in</Link>
                                 <Link onClick={() => setIsMobileMenuOpen(false)} to="/subscription-plans" className="block px-4 py-3 text-lg font-bold rounded-2xl hover:bg-muted transition-colors">Subscription</Link>
                                 <Link onClick={() => setIsMobileMenuOpen(false)} to="/signup" className="btn-primary w-full text-center py-3.5">Sign up</Link>
