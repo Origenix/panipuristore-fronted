@@ -70,7 +70,8 @@ const RestaurantList = () => {
         if (sortBy) params.sortBy = sortBy;
 
         setLoadError(false);
-        setRefreshing(true);
+        setLoading(!hasLoadedOnce.current);
+        setRefreshing(hasLoadedOnce.current);
         try {
             const result = await getPublicList('/restaurants/public', params, { forceRefresh: true });
             setRestaurants(result);
