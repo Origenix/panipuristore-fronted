@@ -5,12 +5,45 @@ import axios from './axios';
 const CACHE_TTL_MS = 60_000;
 const responseCache = new Map();
 const inFlightRequests = new Map();
+const STORAGE_PREFIX = 'panipuri:public-catalog:';
 
 const buildCacheKey = (path, params) => {
     const sortedParams = Object.entries(params || {})
         .filter(([, value]) => value !== undefined && value !== null && value !== '')
         .sort(([a], [b]) => a.localeCompare(b));
     return `${path}?${JSON.stringify(sortedParams)}`;
+};
+
+const readCache = (key) => {
+    const memoryEntry = responseCache.get(key);
+    if (memoryEntry && memoryEntry.expiresAt > Date.now()) return memoryEntry;
+    if (typeof window !== 'undefined') {
+        try {
+            const raw = window.sessionStorage.getItem(STORAGE_PREFIX + key);
+            if (raw) {
+                const storedEntry = JSON.parse(raw);
+                if (storedEntry.expiresAt > Date.now() && Array.isArray(storedEntry.data)) {
+                    responseCache.set(key, storedEntry);
+                    return storedEntry;
+                }
+                window.sessionStorage.removeItem(STORAGE_PREFIX + key);
+            }
+        } catch {
+            // Storage can be unavailable in private browsing or restricted contexts.
+        }
+    }
+    return null;
+};
+
+const writeCache = (key, entry) => {
+    responseCache.set(key, entry);
+    if (typeof window !== 'undefined') {
+        try {
+            window.sessionStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(entry));
+        } catch {
+            // In-memory caching still works when session storage is unavailable.
+        }
+    }
 };
 
 const normalizeList = (payload) => {
@@ -25,7 +58,7 @@ const normalizeList = (payload) => {
 export const getPublicList = async (path, params = {}, options = {}) => {
     const { forceRefresh = false, ttl = CACHE_TTL_MS } = options;
     const key = buildCacheKey(path, params);
-    const cached = responseCache.get(key);
+    const cached = readCache(key);
 
     if (!forceRefresh && cached && cached.expiresAt > Date.now()) {
         return cached.data;
@@ -35,12 +68,17 @@ export const getPublicList = async (path, params = {}, options = {}) => {
         return inFlightRequests.get(key);
     }
 
-    if (forceRefresh) responseCache.delete(key);
+    if (forceRefresh) {
+        responseCache.delete(key);
+        if (typeof window !== 'undefined') {
+            try { window.sessionStorage.removeItem(STORAGE_PREFIX + key); } catch { /* Ignore unavailable storage. */ }
+        }
+    }
 
     const request = axios.get(path, { params })
         .then(({ data }) => {
             const list = normalizeList(data);
-            responseCache.set(key, { data: list, expiresAt: Date.now() + ttl });
+            writeCache(key, { data: list, expiresAt: Date.now() + ttl });
             return list;
         })
         .finally(() => {
