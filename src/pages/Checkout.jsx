@@ -3,9 +3,19 @@ import { useNavigate, Link } from 'react-router-dom';
 import axios from '../api/axios';
 import { AuthContext } from '../context/AuthContext';
 import { CartContext } from '../context/CartContext';
-import { CreditCard, MapPin, Truck, CheckCircle2, ArrowLeft, ShieldCheck, Home, Building, AlertTriangle, X, Wallet, Fingerprint, Flame, Plus, Tag } from 'lucide-react';
+import { CreditCard, MapPin, Truck, CheckCircle2, ArrowLeft, ShieldCheck, Home, Building, AlertTriangle, X, Fingerprint, Flame, Plus, Tag } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AddressForm from '../components/AddressForm';
+
+const loadRazorpayScript = () => new Promise((resolve, reject) => {
+    if (window.Razorpay) return resolve(true);
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => reject(new Error('Unable to load Razorpay checkout. Check your internet connection and try again.'));
+    document.body.appendChild(script);
+});
 
 const Checkout = () => {
     const { user } = useContext(AuthContext);
@@ -13,7 +23,7 @@ const Checkout = () => {
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
-        paymentMethod: 'UPI'
+        paymentMethod: 'COD'
     });
     
     const [addresses, setAddresses] = useState([]);
@@ -35,15 +45,7 @@ const Checkout = () => {
     const [restaurantClosingTime, setRestaurantClosingTime] = useState(null);
     const [restaurantManualClosed, setRestaurantManualClosed] = useState(false);
 
-    // Payment Gateway States
-    const [showPaymentModal, setShowPaymentModal] = useState(false);
-    const [paymentProcessing, setPaymentProcessing] = useState(false);
-    const [paymentOrder, setPaymentOrder] = useState(null);
-    const [paymentConfig, setPaymentConfig] = useState({ upiId: '', payeeName: 'PanipuriStore' });
-    const [showProofModal, setShowProofModal] = useState(false);
-    const [paymentProofFile, setPaymentProofFile] = useState(null);
-    const [paymentConfirmed, setPaymentConfirmed] = useState(false);
-    const [proofUploading, setProofUploading] = useState(false);
+
 
     // Error Modal States
     const [showErrorModal, setShowErrorModal] = useState(false);
@@ -135,20 +137,13 @@ const Checkout = () => {
     };
     const handlePlaceOrder = async (e) => {
         e.preventDefault();
-        
         if (!selectedAddress) {
             toast.error("Please select a delivery address");
             return;
         }
-
-        // Always refresh the server-side cart immediately before checkout.
-        // The checkout page can otherwise hold stale cart data if the cart was
-        // changed/cleared in another tab or after a previous payment flow.
-        let latestCart;
         try {
             const cartResponse = await axios.get('/cart');
-            latestCart = cartResponse.data;
-            if (!latestCart?.items?.length) {
+            if (!cartResponse.data?.items?.length) {
                 await fetchCart();
                 setErrorDetails({
                     message: "Your cart is empty or has changed. Please return to the cart and add your items again.",
@@ -161,75 +156,89 @@ const Checkout = () => {
             handleRuntimeError(cartError);
             return;
         }
-
         if (restaurantManualClosed) {
-            setErrorDetails({
-                message: "This restaurant is currently closed and is not accepting orders right now. Please try again later.",
-                devInfo: ""
-            });
+            setErrorDetails({ message: "This restaurant is currently closed and is not accepting orders right now. Please try again later.", devInfo: "" });
             setShowErrorModal(true);
             return;
         }
-
         if (!isRestaurantOpen()) {
             setErrorDetails({ message: getRestaurantHoursMessage(), devInfo: "" });
             setShowErrorModal(true);
             return;
         }
-
         const currentSubtotal = cart?.items?.reduce((acc, item) => acc + (item.price * item.quantity), 0) || 0;
         if (minimumOrderAmount > 0 && currentSubtotal < minimumOrderAmount) {
-            const amountToAdd = minimumOrderAmount - currentSubtotal;
-            toast.error(`Cart amount is too low. Add ₹${amountToAdd.toFixed(2)} more to place the order.`, { duration: 5000 });
+            toast.error(`Cart amount is too low. Add ₹${(minimumOrderAmount - currentSubtotal).toFixed(2)} more to place the order.`, { duration: 5000 });
             return;
         }
-
-        if (formData.paymentMethod === 'UPI') {
-            setLoading(true);
-            try {
-                const formattedDeliveryAddress = `${selectedAddress.addressType} - ${selectedAddress.fullName}, ${selectedAddress.houseNo}, ${selectedAddress.area}${selectedAddress.landmark ? ', Landmark: ' + selectedAddress.landmark : ''}, ${selectedAddress.city}, ${selectedAddress.state} - ${selectedAddress.pinCode}. Mob: ${selectedAddress.mobileNumber}.${selectedAddress.deliveryNote ? ' Note: ' + selectedAddress.deliveryNote : ''}`;
-                const response = await axios.post('/orders/place', {
-                    deliveryAddress: formattedDeliveryAddress,
-                    paymentMethod: 'UPI',
-                    latitude: selectedAddress.latitude,
-                    longitude: selectedAddress.longitude,
-                    couponCode: appliedCoupon ? appliedCoupon.code : null
-                });
-                setPaymentOrder(response.data);
-                const config = await axios.get('/payment/config');
-                setPaymentConfig(config.data);
-                setShowPaymentModal(true);
-            } catch (err) {
-                handleRuntimeError(err);
-            } finally {
-                setLoading(false);
-            }
-            return;
-        }
-
         executeOrder();
     };
 
     const executeOrder = async () => {
         setLoading(true);
-        
         const formattedDeliveryAddress = `${selectedAddress.addressType} - ${selectedAddress.fullName}, ${selectedAddress.houseNo}, ${selectedAddress.area}${selectedAddress.landmark ? ', Landmark: ' + selectedAddress.landmark : ''}, ${selectedAddress.city}, ${selectedAddress.state} - ${selectedAddress.pinCode}. Mob: ${selectedAddress.mobileNumber}.${selectedAddress.deliveryNote ? ' Note: ' + selectedAddress.deliveryNote : ''}`;
-
-        const finalPayload = {
+        const payload = {
             deliveryAddress: formattedDeliveryAddress,
             paymentMethod: formData.paymentMethod,
             latitude: selectedAddress.latitude,
             longitude: selectedAddress.longitude,
             couponCode: appliedCoupon ? appliedCoupon.code : null
         };
-        
         try {
-            await axios.post('/orders/place', finalPayload);
+            const orderResponse = await axios.post('/orders/place', payload);
+            const localOrder = orderResponse.data;
+            if (formData.paymentMethod === 'RAZORPAY') {
+                const gatewayResponse = await axios.post('/payments/razorpay/create-order', null, { params: { orderId: localOrder.id } });
+                const gatewayOrder = gatewayResponse.data;
+                if (!gatewayOrder?.keyId || !gatewayOrder?.razorpayOrderId ||
+                    !Number.isInteger(Number(gatewayOrder.amount)) || Number(gatewayOrder.amount) < 100) {
+                    throw new Error('Razorpay returned an invalid payment order. Please try again.');
+                }
+                await loadRazorpayScript();
+                const checkout = new window.Razorpay({
+                    key: gatewayOrder.keyId,
+                    amount: String(gatewayOrder.amount),
+                    currency: gatewayOrder.currency || 'INR',
+                    name: 'Panipuri Store',
+                    description: 'Order #' + (localOrder.orderNumber || gatewayOrder.orderNumber),
+                    order_id: gatewayOrder.razorpayOrderId,
+                    prefill: {
+                        name: user?.name || selectedAddress.fullName || '',
+                        email: user?.email || '',
+                        contact: selectedAddress.mobileNumber || ''
+                    },
+                    notes: { orderNumber: localOrder.orderNumber || '' },
+                    theme: { color: '#0A8F4C' },
+                    modal: {
+                        ondismiss: () => toast('Payment window closed. Your order remains pending; you can retry checkout.', { icon: 'ℹ️' })
+                    },
+                    handler: async (result) => {
+                        try {
+                            const verified = await axios.post('/payments/razorpay/verify', {
+                                orderId: localOrder.id,
+                                razorpayPaymentId: result.razorpay_payment_id,
+                                razorpayOrderId: result.razorpay_order_id,
+                                razorpaySignature: result.razorpay_signature
+                            });
+                            if (verified.data?.success !== true) throw new Error(verified.data?.message || 'Payment verification was not confirmed.');
+                            setOrderSuccess(true);
+                            await fetchCart();
+                            toast.success('Payment verified. Your order is confirmed.');
+                            setTimeout(() => navigate('/orders'), 1000);
+                        } catch (verifyError) {
+                            toast.error(verifyError.response?.data?.message || verifyError.message || 'Payment verification failed. Check My Orders before retrying.');
+                        }
+                    }
+                });
+                checkout.on('payment.failed', (event) => {
+                    toast.error(event?.error?.description || 'Payment failed. The order has not been marked as paid.', { duration: 6000 });
+                });
+                checkout.open();
+                return;
+            }
             setOrderSuccess(true);
-            fetchCart(); 
-            setTimeout(() => {
-                navigate('/orders');
-            }, 1000);
+            await fetchCart();
+            setTimeout(() => navigate('/orders'), 1000);
         } catch (err) {
             handleRuntimeError(err);
         } finally {
@@ -520,25 +529,14 @@ const Checkout = () => {
                                         <span className="text-sm font-bold text-muted-foreground">Pay when food arrives.</span>
                                     </label>
                                     
-                                    <label className={`p-6 rounded-[2rem] border-2 cursor-pointer transition-all flex flex-col gap-3 relative ${formData.paymentMethod === 'UPI' ? 'border-primary bg-primary/10 shadow-lg shadow-primary/10' : 'border-border bg-muted/30 hover:border-primary/50'}`}>
-                                        <div className="absolute top-4 right-4 bg-accent text-secondary text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-sm">
-                                            UPI
-                                        </div>
+                                    <label className={`p-6 rounded-[2rem] border-2 cursor-pointer transition-all flex flex-col gap-3 relative ${formData.paymentMethod === 'RAZORPAY' ? 'border-primary bg-primary/10 shadow-lg shadow-primary/10' : 'border-border bg-muted/30 hover:border-primary/50'}`}>
+                                        <div className="absolute top-4 right-4 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">Secure</div>
                                         <div className="flex justify-between items-center w-full">
-                                            <input 
-                                                type="radio" 
-                                                name="paymentMethod" 
-                                                value="UPI"
-                                                checked={formData.paymentMethod === 'UPI'}
-                                                onChange={handleChange}
-                                                className="w-5 h-5 accent-primary cursor-pointer"
-                                            />
-                                            <div className={`p-3 rounded-xl bg-background text-muted-foreground`}>
-                                                <Wallet className="w-6 h-6" />
-                                            </div>
+                                            <input type="radio" name="paymentMethod" value="RAZORPAY" checked={formData.paymentMethod === 'RAZORPAY'} onChange={handleChange} className="w-5 h-5 accent-primary cursor-pointer" />
+                                            <div className="p-3 rounded-xl bg-background text-primary"><CreditCard className="w-6 h-6" /></div>
                                         </div>
-                                        <span className="font-black text-xl mt-2">Pay Online</span>
-                                        <span className="text-sm font-bold text-muted-foreground">Pay securely using UPI QR or UPI apps.</span>
+                                        <span className="font-black text-xl mt-2">Pay Online with Razorpay</span>
+                                        <span className="text-sm font-bold text-muted-foreground">Secure checkout with available online payment methods.</span>
                                     </label>
                                 </div>
                             </form>
@@ -650,7 +648,7 @@ const Checkout = () => {
                                 disabled={loading || fetchingAddresses || (addresses.length === 0 && !selectedAddress) || (minimumOrderAmount > 0 && subtotal < minimumOrderAmount) || !isRestaurantOpen()}
                                 className="btn-primary w-full h-16 text-xl tracking-tight !bg-white !text-primary hover:!bg-primary hover:!text-white shadow-2xl shadow-black/40 relative z-10 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {loading ? 'Processing...' : (restaurantManualClosed ? 'Restaurant Closed' : (formData.paymentMethod === 'UPI' ? 'Proceed to Pay' : 'Place Order'))}
+                                {loading ? 'Processing...' : (restaurantManualClosed ? 'Restaurant Closed' : (formData.paymentMethod === 'RAZORPAY' ? 'Proceed to Pay Securely' : 'Place Order'))}
                             </button>
                             
                             <div className="mt-8 flex items-center gap-2 text-[11px] font-black uppercase tracking-widest opacity-50 justify-center relative z-10">
@@ -662,140 +660,6 @@ const Checkout = () => {
                 </div>
             </div>
 
-            {/* UPI Payment Modal */}
-            {showPaymentModal && paymentOrder && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-md">
-                    <div className="bg-card w-full max-w-lg max-h-[92vh] overflow-y-auto rounded-[2rem] shadow-2xl border border-border">
-                        <div className="bg-primary p-7 text-white text-center relative">
-                            <button onClick={() => setShowPaymentModal(false)} className="absolute top-5 right-5 p-2 bg-black/20 rounded-full"><X className="w-5 h-5" /></button>
-                            <ShieldCheck className="w-12 h-12 mx-auto mb-3" /><h2 className="text-2xl font-black">Pay via UPI</h2>
-                            <p className="font-bold opacity-90 mt-1">Order #{paymentOrder.orderNumber}</p>
-                        </div>
-                        <div className="p-6 md:p-8 space-y-6">
-                            <div className="flex justify-between items-center p-5 rounded-2xl bg-primary/5 border border-primary/20"><span className="font-black text-muted-foreground uppercase tracking-widest text-xs">Amount to pay</span><span className="text-3xl font-black text-primary">₹{Number(paymentOrder.totalAmount).toFixed(2)}</span></div>
-                            <div className="grid grid-cols-2 gap-3">
-                                {[
-    { name: 'Google Pay', logo: 'https://cdn.simpleicons.org/googlepay', alt: 'Google Pay' },
-    { name: 'PhonePe', logo: 'https://cdn.simpleicons.org/phonepe', alt: 'PhonePe' },
-    { name: 'Paytm', logo: 'https://cdn.simpleicons.org/paytm', alt: 'Paytm' },
-    { name: 'BHIM', logo: 'https://cdn.simpleicons.org/bhim', fallbackLogo: 'https://cdn.simpleicons.org/upi', alt: 'BHIM UPI' }
-].map(app => (
-    <button key={app.name} type="button" onClick={() => openUpiApp(app)} className="p-4 rounded-2xl border-2 border-border hover:border-primary hover:bg-primary/5 font-black transition-all flex flex-col items-center justify-center gap-2 bg-card text-foreground">
-        <img
-            src={app.logo}
-            alt={app.alt}
-            className="w-10 h-10 object-contain"
-            loading="lazy"
-            onError={(e) => {
-                if (app.fallbackLogo && e.currentTarget.src !== app.fallbackLogo) {
-                    e.currentTarget.src = app.fallbackLogo;
-                    return;
-                }
-                e.currentTarget.style.display = 'none';
-                if (e.currentTarget.nextElementSibling) e.currentTarget.nextElementSibling.classList.remove('hidden');
-            }}
-        />
-        <span className="hidden w-10 h-10 rounded-xl bg-muted text-primary items-center justify-center text-[10px] font-black">{app.name === 'BHIM' ? 'BHIM' : 'UPI'}</span>
-        <span>{app.name}</span>
-    </button>
-))}
-                            </div>
-                            <div className="text-center text-xs font-black uppercase tracking-widest text-muted-foreground">OR PAY VIA QR CODE</div>
-                            {paymentConfig.upiId ? <div className="flex flex-col items-center gap-3"><img src={'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(buildUpiUri(paymentConfig.upiId, paymentOrder.totalAmount, paymentOrder.orderNumber))} alt="Dynamic UPI QR Code" className="w-64 h-64 rounded-2xl border border-border p-2 bg-white" /><p className="text-sm font-bold text-muted-foreground">Scan to pay exactly ₹{Number(paymentOrder.totalAmount).toFixed(2)}</p></div> : <p className="text-center text-danger font-bold">UPI ID is not configured yet.</p>}
-                            <button type="button" onClick={handlePaymentDone} className="btn-primary w-full h-14 text-lg font-black">I Have Paid</button>
-                            <p className="text-xs text-muted-foreground text-center">
-                                After payment, click "I Have Paid" and submit your payment screenshot. Your order is not finalized until the screenshot is uploaded.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Payment Proof Modal */}
-            {showProofModal && paymentOrder && (
-                <div className="fixed inset-0 z-[55] flex items-center justify-center p-4 bg-background/90 backdrop-blur-md">
-                    <div className="bg-card w-full max-w-lg rounded-[2rem] shadow-2xl border border-border p-7">
-                        <div className="flex items-center justify-between mb-6">
-                            <div>
-                                <h2 className="text-2xl font-black">Payment Proof</h2>
-                                <p className="text-sm text-muted-foreground font-bold mt-1">Order #{paymentOrder.orderNumber}</p>
-                            </div>
-                            <button onClick={() => setShowProofModal(false)} className="p-2 rounded-full bg-muted"><X className="w-5 h-5" /></button>
-                        </div>
-
-                        <div className="p-4 rounded-2xl bg-primary/5 border border-primary/20 mb-5">
-                            <label className="flex items-start gap-3 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={paymentConfirmed}
-                                    onChange={e => setPaymentConfirmed(e.target.checked)}
-                                    className="mt-1 w-5 h-5 accent-primary shrink-0"
-                                />
-                                <span className="text-sm font-bold leading-6">
-                                    I confirm that I have successfully completed the UPI payment. If I have not completed the payment, I agree that the payment/order may be cancelled.
-                                </span>
-                            </label>
-                        </div>
-
-                        <label className="block p-6 rounded-2xl border-2 border-dashed border-primary/40 text-center cursor-pointer hover:bg-primary/5">
-                            <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={e => setPaymentProofFile(e.target.files?.[0] || null)} />
-                            <div className="font-black text-lg">{paymentProofFile ? paymentProofFile.name : 'Upload Payment Screenshot'}</div>
-                            <div className="text-xs text-muted-foreground mt-2">JPG, PNG or WEBP • Maximum 8 MB</div>
-                        </label>
-
-                        <button
-                            type="button"
-                            onClick={uploadPaymentProof}
-                            disabled={!paymentConfirmed || !paymentProofFile || proofUploading}
-                            className="btn-primary w-full h-14 mt-5 font-black disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {proofUploading ? 'Uploading...' : 'Upload Screenshot & Place Order'}
-                        </button>
-
-                        <div className="flex items-center gap-3 my-5">
-                            <div className="h-px bg-border flex-1"></div>
-                            <span className="text-xs font-black text-muted-foreground">OR</span>
-                            <div className="h-px bg-border flex-1"></div>
-                        </div>
-
-                        <button
-                            type="button"
-                            onClick={openWhatsAppPayment}
-                            disabled={!paymentConfirmed || !paymentProofFile}
-                            className="w-full h-14 rounded-xl bg-green-600 text-white font-black hover:bg-green-700 transition-colors flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <img src="https://cdn.simpleicons.org/whatsapp/ffffff" alt="" className="w-6 h-6" />
-                            Send Screenshot + Details on WhatsApp
-                        </button>
-
-                        <p className="text-xs text-muted-foreground text-center mt-4">
-                            WhatsApp sharing only sends the proof to the selected number. To finalize this order on the website, the screenshot must also be uploaded here.
-                        </p>
-
-                        <button
-                            type="button"
-                            onClick={async () => {
-                                if (!paymentOrder?.id) return;
-                                try {
-                                    await axios.put('/orders/' + paymentOrder.id + '/cancel-payment');
-                                    setShowProofModal(false);
-                                    setShowPaymentModal(false);
-                                    setPaymentOrder(null);
-                                    setPaymentProofFile(null);
-                                    setPaymentConfirmed(false);
-                                    toast.success('Payment cancelled. Your cart is still available.');
-                                } catch (err) {
-                                    toast.error(err.response?.data?.message || err.response?.data?.error || 'Unable to cancel payment');
-                                }
-                            }}
-                            disabled={proofUploading}
-                            className="w-full mt-3 h-12 rounded-xl border border-danger/30 text-danger font-black hover:bg-danger/10 transition-colors disabled:opacity-50"
-                        >
-                            Cancel Payment
-                        </button>
-                    </div>
-                </div>
-            )}
             {/* Developer-Friendly Error Modal */}
             {showErrorModal && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-background/90 backdrop-blur-xl">
@@ -824,7 +688,7 @@ const Checkout = () => {
                                 <button onClick={() => setShowErrorModal(false)} className="btn-primary flex-1 h-16 bg-danger hover:bg-red-600 border-none shadow-xl shadow-danger/20">
                                     Dismiss
                                 </button>
-                                <button onClick={() => {setShowErrorModal(false); setShowPaymentModal(true)}} className="btn-secondary flex-1 h-16 flex items-center justify-center bg-transparent border-2 border-danger/30 hover:border-danger hover:bg-danger/10 text-danger font-black">
+                                <button onClick={() => {setShowErrorModal(false); executeOrder()}} className="btn-secondary flex-1 h-16 flex items-center justify-center bg-transparent border-2 border-danger/30 hover:border-danger hover:bg-danger/10 text-danger font-black">
                                     Try Again
                                 </button>
                             </div>
