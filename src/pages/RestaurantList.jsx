@@ -1,11 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import axios from '../api/axios';
+import { getPublicList } from '../api/publicCatalog';
 import { Star, Clock, Search, SlidersHorizontal, ArrowUpDown, Store } from 'lucide-react';
 
 const RestaurantList = () => {
     const [restaurants, setRestaurants] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [loadError, setLoadError] = useState(false);
+    const hasLoadedOnce = useRef(false);
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
     const initialSearch = queryParams.get('search') || '';
@@ -27,23 +30,60 @@ const RestaurantList = () => {
     const categories = ['All', 'Street Food', 'Chaat', 'Beverages', 'Fast Food', 'North Indian'];
 
     useEffect(() => {
+        let cancelled = false;
+
         const fetchRestaurants = async () => {
-            setLoading(true);
+            const params = {};
+            if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
+            if (selectedCategory && selectedCategory !== 'All') params.category = selectedCategory;
+            if (sortBy) params.sortBy = sortBy;
+
+            setLoadError(false);
+            setLoading(!hasLoadedOnce.current);
+            setRefreshing(hasLoadedOnce.current);
+
             try {
-                const params = {};
-                if (debouncedSearch) params.search = debouncedSearch;
-                if (selectedCategory && selectedCategory !== 'All') params.category = selectedCategory;
-                if (sortBy) params.sortBy = sortBy;
-                const res = await axios.get('/restaurants/public', { params });
-                setRestaurants(res.data);
+                const result = await getPublicList('/restaurants/public', params);
+                if (!cancelled) {
+                    setRestaurants(result);
+                    hasLoadedOnce.current = true;
+                }
             } catch (error) {
                 console.error("Error fetching restaurants", error);
+                if (!cancelled) setLoadError(true);
             } finally {
-                setLoading(false);
+                if (!cancelled) {
+                    setLoading(false);
+                    setRefreshing(false);
+                }
             }
         };
+
         fetchRestaurants();
+        return () => { cancelled = true; };
     }, [debouncedSearch, selectedCategory, sortBy]);
+
+    const retryRestaurantLoad = async () => {
+        const params = {};
+        if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
+        if (selectedCategory && selectedCategory !== 'All') params.category = selectedCategory;
+        if (sortBy) params.sortBy = sortBy;
+
+        setLoadError(false);
+        setLoading(!hasLoadedOnce.current);
+        setRefreshing(hasLoadedOnce.current);
+        try {
+            const result = await getPublicList('/restaurants/public', params, { forceRefresh: true });
+            setRestaurants(result);
+            hasLoadedOnce.current = true;
+        } catch (error) {
+            console.error("Failed to retry loading restaurants", error);
+            setLoadError(true);
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
+    };
 
     return (
         <div className="pt-28 pb-20 min-h-screen bg-background">
@@ -112,6 +152,10 @@ const RestaurantList = () => {
                     </div>
                 </div>
 
+                {refreshing && (
+                    <p className="mb-4 text-sm font-semibold text-muted-foreground" role="status">Updating restaurants…</p>
+                )}
+
                 {loading ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {[1,2,3,4,5,6].map(i => (
@@ -121,6 +165,17 @@ const RestaurantList = () => {
                                 <div className="h-4 bg-muted rounded-full w-1/3"></div>
                             </div>
                         ))}
+                    </div>
+                ) : loadError ? (
+                    <div className="text-center py-24 bg-muted/30 rounded-[3rem] border border-dashed border-border">
+                        <div className="bg-background w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
+                            <Store className="w-10 h-10 text-muted-foreground" />
+                        </div>
+                        <h3 className="text-2xl font-black mb-3">Restaurants couldn't load</h3>
+                        <p className="text-muted-foreground max-w-sm mx-auto mb-8 font-medium">The restaurant service may be waking up or temporarily unavailable. Your stores haven't been removed.</p>
+                        <button onClick={retryRestaurantLoad} disabled={refreshing} className="btn-primary">
+                            {refreshing ? 'Loading...' : 'Try Again'}
+                        </button>
                     </div>
                 ) : restaurants.length === 0 ? (
                     <div className="text-center py-24 bg-muted/30 rounded-[3rem] border border-dashed border-border">

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
-import axios from '../api/axios';
+import { getPublicList } from '../api/publicCatalog';
 import { CartContext } from '../context/CartContext';
 import { AuthContext } from '../context/AuthContext';
 import { Search, Flame, ShoppingBag, Store, Tag } from 'lucide-react';
@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 const AllMenu = () => {
     const [menuItems, setMenuItems] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeCategory, setActiveCategory] = useState('All');
     const [addingItemId, setAddingItemId] = useState(null);
@@ -17,19 +18,38 @@ const AllMenu = () => {
     const { user } = useContext(AuthContext);
 
     useEffect(() => {
+        let cancelled = false;
+
         const fetchAll = async () => {
             try {
-                const res = await axios.get('/menu/public/all');
-                setMenuItems(res.data);
+                setLoadError(false);
+                const items = await getPublicList('/menu/public/all');
+                if (!cancelled) setMenuItems(items);
             } catch (error) {
                 console.error('Failed to fetch all menu items', error);
-                toast.error('Failed to load menu. Please try again.');
+                if (!cancelled) setLoadError(true);
             } finally {
-                setLoading(false);
+                if (!cancelled) setLoading(false);
             }
         };
+
         fetchAll();
+        return () => { cancelled = true; };
     }, []);
+
+    const retryMenuLoad = async () => {
+        setLoading(true);
+        setLoadError(false);
+        try {
+            const items = await getPublicList('/menu/public/all', {}, { forceRefresh: true });
+            setMenuItems(items);
+        } catch (error) {
+            console.error('Failed to retry loading menu items', error);
+            setLoadError(true);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleAddToCart = async (item) => {
         if (!user || user.role !== 'ROLE_CUSTOMER') {
@@ -114,13 +134,24 @@ const AllMenu = () => {
                             </div>
                         ))}
                     </div>
+                ) : loadError ? (
+                    <div className="text-center py-20 bg-muted/30 rounded-[2.5rem] border border-dashed border-border">
+                        <div className="w-20 h-20 rounded-full bg-background flex items-center justify-center mx-auto mb-4 shadow-sm">
+                            <Search className="w-8 h-8 text-muted-foreground" />
+                        </div>
+                        <h3 className="text-2xl font-black mb-2">We couldn't load the menu</h3>
+                        <p className="text-muted-foreground font-medium mb-6">The menu service may be waking up or temporarily unavailable. Your dishes haven't been removed.</p>
+                        <button onClick={retryMenuLoad} className="btn-primary" disabled={loading}>
+                            {loading ? 'Loading...' : 'Try Again'}
+                        </button>
+                    </div>
                 ) : filteredItems.length === 0 ? (
                     <div className="text-center py-20 bg-muted/30 rounded-[2.5rem] border border-dashed border-border">
                         <div className="w-20 h-20 rounded-full bg-background flex items-center justify-center mx-auto mb-4 shadow-sm">
                             <Search className="w-8 h-8 text-muted-foreground" />
                         </div>
                         <h3 className="text-2xl font-black mb-2">No dishes found</h3>
-                        <p className="text-muted-foreground font-medium mb-6">Try a different search or category.</p>
+                        <p className="text-muted-foreground font-medium mb-6">{searchQuery || activeCategory !== 'All' ? 'Try a different search or category.' : 'There are currently no available dishes. Please check back soon.'}</p>
                         <button
                             onClick={() => { setSearchQuery(''); setActiveCategory('All'); }}
                             className="btn-primary"
