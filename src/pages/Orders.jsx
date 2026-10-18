@@ -83,9 +83,9 @@ const Orders = () => {
         const itemRows = (order.items || []).map(item =>
             `<tr><td>${item.menuItemName}</td><td style="text-align:center">${item.quantity}</td><td style="text-align:right">₹${Number(item.price * item.quantity).toFixed(2)}</td></tr>`
         ).join('');
-        const paymentLabel = order.paymentMethod === 'UPI'
-            ? (order.paymentStatus === 'VERIFIED' ? 'UPI - Payment Verified' : 'UPI - Payment Done / Verification Processing')
-            : 'Cash on Delivery';
+        const paymentLabel = order.paymentMethod === 'RAZORPAY'
+            ? (order.paymentStatus === 'VERIFIED' ? 'Razorpay - Payment Verified' : 'Razorpay - Verification Pending')
+            : order.paymentMethod === 'COD' ? 'Cash on Delivery' : 'Legacy online payment';
         const orderedAt = order.createdAt
             ? new Date(order.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
             : '—';
@@ -160,18 +160,8 @@ const Orders = () => {
                                         <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black tracking-widest uppercase shadow-sm ${getStatusColor(order.orderStatus)}`}>
                                             {order.orderStatus.replace(/_/g, ' ')}
                                         </span>
-                                        <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black tracking-widest uppercase shadow-sm ${
-                                            order.paymentMethod === 'UPI'
-                                                ? order.paymentStatus === 'VERIFIED'
-                                                    ? 'text-green-700 bg-green-500/15 border border-green-500/30'
-                                                    : order.paymentStatus === 'REJECTED'
-                                                        ? 'text-red-700 bg-red-500/15 border border-red-500/30'
-                                                        : 'text-orange-700 bg-orange-500/15 border border-orange-500/30'
-                                                : 'text-blue-700 bg-blue-500/15 border border-blue-500/30'
-                                        }`}>
-                                            Payment Mode: {order.paymentMethod === 'UPI'
-                                                ? (order.paymentStatus === 'VERIFIED' ? 'UPI • Payment Done • VERIFIED' : order.paymentStatus === 'PROOF_UPLOADED' ? 'UPI • Payment Done • Verification Processing' : 'UPI • ' + (order.paymentStatus || 'PENDING'))
-                                                : 'CASH ON DELIVERY'}
+                                        <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black tracking-widest uppercase shadow-sm ${order.paymentMethod === 'RAZORPAY' ? 'text-green-700 bg-green-500/15 border border-green-500/30' : 'text-blue-700 bg-blue-500/15 border border-blue-500/30'}`}>
+                                            Payment Mode: {order.paymentMethod === 'RAZORPAY' ? (order.paymentStatus === 'VERIFIED' ? 'RAZORPAY • PAID' : 'RAZORPAY • PENDING') : order.paymentMethod === 'COD' ? 'CASH ON DELIVERY' : 'LEGACY ONLINE PAYMENT'}
                                         </span>                                    </div>
                                     <div className="flex flex-wrap items-center gap-6 text-sm font-bold text-muted-foreground">
                                         <span className="flex items-center gap-2"><Clock className="w-4 h-4 text-primary" /> Ordered: {new Date(order.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>

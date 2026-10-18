@@ -13,7 +13,6 @@ const AdminDashboard = () => {
     const [users, setUsers] = useState([]);
     const [restaurants, setRestaurants] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [paymentProofUrl, setPaymentProofUrl] = useState(null);
     const [activeTab, setActiveTab] = useState('analytics');
 
     // New State for Product & Category Management
@@ -289,26 +288,6 @@ const AdminDashboard = () => {
         }
     };
 
-    const updatePaymentStatus = async (orderId, status) => {
-        try {
-            const res = await axios.put('/orders/' + orderId + '/payment-status?status=' + encodeURIComponent(status));
-            setOrders(orders.map(o => o.id === orderId ? res.data : o));
-            toast.success(status === 'VERIFIED' ? 'Payment verified and customer notified.' : 'Payment status updated');
-        } catch (err) {
-            toast.error(err.response?.data?.message || err.response?.data?.error || 'Failed to update payment status');
-        }
-    };
-
-    const viewPaymentProof = async (orderId) => {
-        try {
-            const res = await axios.get('/orders/' + orderId + '/payment-screenshot', { responseType: 'blob' });
-            const url = URL.createObjectURL(res.data);
-            setPaymentProofUrl(url);
-        } catch (err) {
-            toast.error('Payment screenshot is not available.');
-        }
-    };
-
     // User Handlers
     const handleAdminSubmit = async (e) => {
         e.preventDefault();
@@ -466,17 +445,10 @@ const AdminDashboard = () => {
                                             </td>
                                             <td className="py-6 px-10 font-bold text-sm text-muted-foreground">{order.restaurantName}</td>
                                             <td className="py-6 px-10 font-black text-primary">₹{order.totalAmount}</td>
-                                            <td className="py-6 px-10 min-w-[260px]">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <select value={order.paymentStatus || 'PENDING'} onChange={(e) => updatePaymentStatus(order.id, e.target.value)}
-                                                        className="bg-muted border-none rounded-xl px-3 py-2 text-[10px] font-black uppercase tracking-widest outline-none">
-                                                        <option value="PENDING">Pending</option>
-                                                        <option value="PROOF_UPLOADED">Proof Uploaded</option>
-                                                        <option value="VERIFIED">Payment Verified</option>
-                                                        <option value="REJECTED">Rejected</option>
-                                                    </select>
-                                                    {order.paymentScreenshotUploaded && <button type="button" onClick={() => viewPaymentProof(order.id)} className="px-3 py-2 rounded-xl bg-primary/10 text-primary text-[10px] font-black uppercase">View Proof</button>}
-                                                </div>
+                                            <td className="py-6 px-10 min-w-[180px]">
+                                                <span className={`inline-flex rounded-xl px-3 py-2 text-[10px] font-black uppercase tracking-widest ${order.paymentMethod === 'RAZORPAY' ? 'bg-primary/10 text-primary' : 'bg-blue-500/10 text-blue-600'}`}>
+                                                    {order.paymentMethod === 'RAZORPAY' ? 'RAZORPAY' : 'CASH ON DELIVERY'}
+                                                </span>
                                             </td>
                                             <td className="py-6 px-10">
                                                 <select 
@@ -944,14 +916,6 @@ const AdminDashboard = () => {
                     </div>
                 </div>
             )}
-        {paymentProofUrl && (
-            <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4" onClick={() => { URL.revokeObjectURL(paymentProofUrl); setPaymentProofUrl(null); }}>
-                <div className="relative max-w-5xl max-h-[92vh]">
-                    <button type="button" onClick={() => { URL.revokeObjectURL(paymentProofUrl); setPaymentProofUrl(null); }} className="absolute -top-12 right-0 p-2 rounded-full bg-white text-black"><X className="w-6 h-6" /></button>
-                    <img src={paymentProofUrl} alt="Payment proof" className="max-w-full max-h-[88vh] object-contain rounded-xl bg-white" onClick={(e) => e.stopPropagation()} />
-                </div>
-            </div>
-        )}
         </div>
     );
 };
